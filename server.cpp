@@ -1,0 +1,209 @@
+
+
+#include "server.h"
+#include "linux_socket.h"
+
+#include <cassert>
+#include <sys/epoll.h>
+
+server::server(struct sockaddr addr, proxy_server *proxyServer, client *cl) : socket(linux_socket(::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0))),
+                                                                              event(io_event(proxyServer->get_epoll(), socket.get_fd(), EPOLLOUT, [this, proxyServer](uint32_t events)mutable throw(std::runtime_error) {
+                                                                                  try {
+
+
+                                                                                      std::cout << "Processing " << get_host() << " " << get_fd().get_fd() << "\n";
+                                                                                      if (events & EPOLLIN) {
+                                                                                          std::cout << "SERVER EPOLLIN\n";
+                                                                                          read_response(proxyServer);
+                                                                                      }
+                                                                                      if (events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
+                                                                                          std::cout << "Time to disconnect\n";
+                                                                                          disconnect(proxyServer);
+                                                                                          return;
+                                                                                      }
+                                                                                      if (events & EPOLLOUT) {
+                                                                                          std::cout << "SERVER EPOLLOUT\n";
+                                                                                          write_request(proxyServer);
+                                                                                      }
+
+
+                                                                                  } catch (std::runtime_error &e) {
+                                                                                      std::cout << "Error disc\n";
+                                                                                      disconnect(proxyServer);
+                                                                                  }
+                                                                              })),
+                                                                              time(proxyServer->get_epoll().get_time_service(), CONNECTION_TIMEOUT, [proxyServer, this]() {
+                                                                                  std::cout << "Timeout server " << get_host() << "\n";
+                                                                                  this->disconnect(proxyServer);
+                                                                              }) {
+    if (connect(socket.get_fd().get_fd(), &addr, sizeof(addr)) == -1) {
+        if (errno != EINPROGRESS) {
+            perror("Error while connecting to server occurred");
+        }
+    }
+}
+
+file_descriptor &server::get_fd() {
+    return socket.get_fd();
+}
+
+file_descriptor &server::get_client_fd() {
+    assert(paired_client);
+    return paired_client->get_fd();
+}
+
+void server::set_host(const std::string &host) {
+    this->host = host;
+}
+
+std::string server::get_host() {
+    return host;
+}
+
+void server::bind(class client *new_client) {
+    paired_client = new_client;
+}
+
+void server::append(std::string &data) {
+    buffer.append(data);
+}
+
+std::string &server::get_buffer() {
+    return buffer;
+}
+
+size_t server::get_buffer_size() {
+    return buffer.size();
+}
+
+size_t server::write() {
+    try {
+        size_t written_cnt = socket.write(buffer);
+        buffer.erase(0, written_cnt);
+        if (paired_client) {
+            this->push_to_server();
+        }
+        return written_cnt;
+    } catch (...) {
+        return 0;
+    }
+}
+
+std::string server::read() {
+    assert(paired_client);
+    std::cout << "Paired client " << paired_client->get_fd().get_fd() << "\n";
+    /*if (paired_client->get_buffer_size() >= client::BUFFER_SIZE) {
+        return "";
+    }*/
+    try {
+        std::string data = socket.read(socket.get_available_bytes());
+        buffer.append(data);
+        return data;
+    } catch (...) {
+        return "";
+    }
+}
+
+void server::push_to_server() {
+    assert(paired_client);
+    paired_client->flush_client_buffer();
+}
+
+
+void server::push_to_client() {
+    assert(paired_client);
+    paired_client->get_buffer().append(buffer);
+    buffer.clear();
+
+}
+
+
+server::~server() {
+
+}
+
+void server::disconnect(proxy_server *proxyServer) {
+
+    event.remove_flag(EPOLLIN);
+    event.remove_flag(EPOLLOUT);
+    fprintf(stdout, "Disconnect server, fd = %lu, host = [%s]\n", get_fd().get_fd(), get_host().c_str());
+    paired_client->unbind();
+
+    proxyServer->erase_server(get_fd().get_fd());
+
+    time.change_time(SOCKET_TIMEOUT);
+
+
+}
+
+void server::read_response(proxy_server *proxyServer) {
+    fprintf(stdout, "Read data from server, fd = %lu, size = %ld\n", get_fd().get_fd(), socket.get_available_bytes());
+
+    time.change_time(CONNECTION_TIMEOUT);
+
+    std::string data = read();
+
+    http_response *cur_response = paired_client->get_response();
+
+    cur_response->append(data);
+
+    std::cout << "State: " << cur_response->get_stat() << "\n";
+
+    if (cur_response->get_stat() == http_response::BAD) {
+        buffer = http_protocol::BAD_REQUEST();
+        push_to_client();
+        paired_client->event.add_flag(EPOLLOUT);
+        return;
+    }
+    ///std::cout<<"Response:\n";
+//
+    //std::cout<<"--------------------------------------------------------------------------------------------\n\n"<<cur_response->get_data()<<"\n\n";
+    //std::cout<<"--------------------------------------------------------------------------------------------\n\n";
+
+    if (cur_response->is_ended()) {
+        std::string cache_key = paired_client->get_request()->get_host() + paired_client->get_request()->get_relative_URI();
+        // check cache hit
+        if (cur_response->get_status() == "304" && proxyServer->get_cache().contains(cache_key)) {
+            fprintf(stdout, "Cache hit for URI [%s]\n", cache_key.c_str());
+
+            http_response cached_response = proxyServer->get_cache().get(cache_key);
+            get_buffer() = cached_response.get_data();
+        }
+
+        // try cache
+        if (cur_response->is_cacheable() && !proxyServer->get_cache().contains(cache_key)) {
+            proxyServer->get_cache().put(cache_key, *cur_response);
+            fprintf(stdout, "Response for URI [%s] added to cache.\n", cache_key.c_str());
+        }
+
+        push_to_client();
+        paired_client->event.add_flag(EPOLLOUT);
+        std::cout << "Client " << get_client_fd().get_fd() << " must write\n";
+    }
+}
+
+void server::write_request(proxy_server *proxyServer) {
+    fprintf(stdout, "Writing data to server, fd = %lu\n", get_fd().get_fd());
+    time.change_time(CONNECTION_TIMEOUT);
+
+    int error;
+    socklen_t length = sizeof(error);
+    if (getsockopt(get_fd().get_fd(), SOL_SOCKET, SO_ERROR, &error, &length) == -1 || error != 0) {
+        perror("Error while connecting to server. Disconnecting...");
+        disconnect(proxyServer);
+        return;
+    }
+
+    write();
+    if (get_buffer_size() == 0) {
+        event.add_flag(EPOLLIN);
+        event.remove_flag(EPOLLOUT);
+        paired_client->event.add_flag(EPOLLOUT);
+    }
+}
+
+
+void server::add_flag(uint32_t flag) {
+    event.add_flag(flag);
+}
+
