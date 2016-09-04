@@ -6,34 +6,34 @@
 #include <cassert>
 #include <sys/epoll.h>
 
-server::server(struct sockaddr addr, proxy_server *proxyServer, client *cl) : socket(linux_socket(::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0))),
-                                                                              event(io_event(proxyServer->get_epoll(), socket.get_fd(), EPOLLOUT, [this, proxyServer](uint32_t events)mutable throw(std::runtime_error) {
+server::server(struct sockaddr addr, proxy_server &proxyServer, client &cl) : socket(linux_socket(::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0))),
+                                                                              event(io_event(proxyServer.get_epoll(), socket.get_fd(), EPOLLOUT, [this, &proxyServer](uint32_t events)mutable throw(std::runtime_error) {
                                                                                   try {
 
 
-                                                                                      std::cout << "Processing " << get_host() << " " << get_fd().get_fd() << "\n";
+                                                                                      std::cerr << "Processing " << get_host() << " " << get_fd().get_fd() << "\n";
                                                                                       if (events & EPOLLIN) {
-                                                                                          std::cout << "SERVER EPOLLIN\n";
+                                                                                          std::cerr << "SERVER EPOLLIN\n";
                                                                                           read_response(proxyServer);
                                                                                       }
                                                                                       if (events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
-                                                                                          std::cout << "Time to disconnect\n";
+                                                                                          std::cerr << "Time to disconnect\n";
                                                                                           disconnect(proxyServer);
                                                                                           return;
                                                                                       }
                                                                                       if (events & EPOLLOUT) {
-                                                                                          std::cout << "SERVER EPOLLOUT\n";
+                                                                                          std::cerr << "SERVER EPOLLOUT\n";
                                                                                           write_request(proxyServer);
                                                                                       }
 
 
                                                                                   } catch (std::runtime_error &e) {
-                                                                                      std::cout << "Error disc\n";
+                                                                                      std::cerr << "Error disc\n";
                                                                                       disconnect(proxyServer);
                                                                                   }
                                                                               })),
-                                                                              time(proxyServer->get_epoll().get_time_service(), CONNECTION_TIMEOUT, [proxyServer, this]() {
-                                                                                  std::cout << "Timeout server " << get_host() << "\n";
+                                                                              time(proxyServer.get_epoll().get_time_service(), CONNECTION_TIMEOUT, [&proxyServer, this]() {
+                                                                                  std::cerr << "Timeout server " << get_host() << "\n";
                                                                                   this->disconnect(proxyServer);
                                                                               }) {
     if (connect(socket.get_fd().get_fd(), &addr, sizeof(addr)) == -1) {
@@ -60,9 +60,6 @@ std::string server::get_host() {
     return host;
 }
 
-void server::bind(class client *new_client) {
-    paired_client = new_client;
-}
 
 void server::append(std::string &data) {
     buffer.append(data);
@@ -91,7 +88,7 @@ size_t server::write() {
 
 std::string server::read() {
     assert(paired_client);
-    std::cout << "Paired client " << paired_client->get_fd().get_fd() << "\n";
+    std::cerr << "Paired client " << paired_client->get_fd().get_fd() << "\n";
     /*if (paired_client->get_buffer_size() >= client::BUFFER_SIZE) {
         return "";
     }*/
@@ -119,25 +116,25 @@ void server::push_to_client() {
 
 
 server::~server() {
-
+    //std::cerr<<"Deleting server\n";
 }
 
-void server::disconnect(proxy_server *proxyServer) {
+void server::disconnect(proxy_server &proxyServer) {
 
     event.remove_flag(EPOLLIN);
     event.remove_flag(EPOLLOUT);
-    fprintf(stdout, "Disconnect server, fd = %lu, host = [%s]\n", get_fd().get_fd(), get_host().c_str());
+    std::cerr<<"Disconnect server, fd = %lu, host = [%s]\n", get_fd().get_fd(), get_host().c_str();
     paired_client->unbind();
 
-    proxyServer->erase_server(get_fd().get_fd());
+    proxyServer.erase_server(get_fd().get_fd());
 
     time.change_time(SOCKET_TIMEOUT);
 
 
 }
 
-void server::read_response(proxy_server *proxyServer) {
-    fprintf(stdout, "Read data from server, fd = %lu, size = %ld\n", get_fd().get_fd(), socket.get_available_bytes());
+void server::read_response(proxy_server &proxyServer) {
+    std::cerr<<"Read data from server, fd = %lu, size = %ld\n", get_fd().get_fd(), socket.get_available_bytes();
 
     time.change_time(CONNECTION_TIMEOUT);
 
@@ -147,7 +144,7 @@ void server::read_response(proxy_server *proxyServer) {
 
     cur_response->append(data);
 
-    std::cout << "State: " << cur_response->get_stat() << "\n";
+    std::cerr << "State: " << cur_response->get_stat() << "\n";
 
     if (cur_response->get_stat() == http_response::BAD) {
         buffer = http_protocol::BAD_REQUEST();
@@ -155,35 +152,35 @@ void server::read_response(proxy_server *proxyServer) {
         paired_client->event.add_flag(EPOLLOUT);
         return;
     }
-    ///std::cout<<"Response:\n";
+    ///std::cerr<<"Response:\n";
 //
-    //std::cout<<"--------------------------------------------------------------------------------------------\n\n"<<cur_response->get_data()<<"\n\n";
-    //std::cout<<"--------------------------------------------------------------------------------------------\n\n";
+    //std::cerr<<"--------------------------------------------------------------------------------------------\n\n"<<cur_response->get_data()<<"\n\n";
+    //std::cerr<<"--------------------------------------------------------------------------------------------\n\n";
 
     if (cur_response->is_ended()) {
         std::string cache_key = paired_client->get_request()->get_host() + paired_client->get_request()->get_relative_URI();
         // check cache hit
-        if (cur_response->get_status() == "304" && proxyServer->get_cache().contains(cache_key)) {
-            fprintf(stdout, "Cache hit for URI [%s]\n", cache_key.c_str());
+        if (cur_response->get_status() == "304" && proxyServer.get_cache().contains(cache_key)) {
+            std::cerr<<"Cache hit for URI [%s]\n", cache_key.c_str();
 
-            http_response cached_response = proxyServer->get_cache().get(cache_key);
+            http_response cached_response = proxyServer.get_cache().get(cache_key);
             get_buffer() = cached_response.get_data();
         }
 
         // try cache
-        if (cur_response->is_cacheable() && !proxyServer->get_cache().contains(cache_key)) {
-            proxyServer->get_cache().put(cache_key, *cur_response);
-            fprintf(stdout, "Response for URI [%s] added to cache.\n", cache_key.c_str());
+        if (cur_response->is_cacheable() && !proxyServer.get_cache().contains(cache_key)) {
+            proxyServer.get_cache().put(cache_key, *cur_response);
+            std::cerr<<"Response for URI [%s] added to cache.\n", cache_key.c_str();
         }
 
         push_to_client();
         paired_client->event.add_flag(EPOLLOUT);
-        std::cout << "Client " << get_client_fd().get_fd() << " must write\n";
+        std::cerr << "Client " << get_client_fd().get_fd() << " must write\n";
     }
 }
 
-void server::write_request(proxy_server *proxyServer) {
-    fprintf(stdout, "Writing data to server, fd = %lu\n", get_fd().get_fd());
+void server::write_request(proxy_server &proxyServer) {
+    std::cerr<<"Writing data to server, fd = %lu\n", get_fd().get_fd();
     time.change_time(CONNECTION_TIMEOUT);
 
     int error;
@@ -205,5 +202,9 @@ void server::write_request(proxy_server *proxyServer) {
 
 void server::add_flag(uint32_t flag) {
     event.add_flag(flag);
+}
+
+void server::bind(client& new_client) {
+    paired_client = &new_client;
 }
 

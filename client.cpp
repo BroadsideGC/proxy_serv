@@ -2,13 +2,13 @@
 #include <cassert>
 #include <sys/epoll.h>
 
-client::client(int fd, proxy_server *proxyServer) : socket(fd), request_server(nullptr),
-                                                    event(proxyServer->get_epoll(), get_fd(), EPOLLIN,
-                                                          [proxyServer, this](uint32_t events) mutable throw(std::runtime_error) {
+client::client(int fd, proxy_server &proxyServer) : socket(fd), request_server(nullptr),
+                                                    event(proxyServer.get_epoll(), get_fd(), EPOLLIN,
+                                                          [&proxyServer, this](uint32_t events) mutable throw(std::runtime_error) {
                                                               try {
 
                                                                   if (events & EPOLLIN) {
-                                                                      std::cout << "EPOLLIN in client\n";
+                                                                      std::cerr << "EPOLLIN in client\n";
                                                                       this->read_request(proxyServer);
                                                                   }
                                                                   if (events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
@@ -16,33 +16,25 @@ client::client(int fd, proxy_server *proxyServer) : socket(fd), request_server(n
                                                                       return;
                                                                   }
                                                                   if (events & EPOLLOUT) {
-                                                                      std::cout << "Client EPOLLOUT\n";
+                                                                      std::cerr << "Client EPOLLOUT\n";
                                                                       write_response(proxyServer);
                                                                   }
 
                                                               } catch (...) {
-                                                                  std::cout << "Client error\n";
+                                                                  std::cerr << "Client error\n";
                                                                   disconnect(proxyServer);
                                                               }
 
-                                                          }), time(proxyServer->get_epoll().get_time_service(), SOCKET_TIMEOUT, [proxyServer, this]() {
-            std::cout << "Timeout client\n";
-            this->disconnect(proxyServer);
+                                                          }), time(proxyServer.get_epoll().get_time_service(), SOCKET_TIMEOUT, [&proxyServer, this]() {
+            std::cerr << "Timeout client\n";
+            disconnect(proxyServer);
 
         }) {
 
 };
 
 client::~client() {
-    if (request_server) {
-        unbind();
-    }
-    if (request != nullptr) {
-        request.reset();
-    }
-    if (response != nullptr) {
-        response.reset();
-    }
+   // std::cerr<<"Client destroyed\n";
 }
 
 file_descriptor &client::get_fd() {
@@ -94,9 +86,9 @@ size_t client::write() {
     }
 }
 
-void client::bind(class server *new_server) {
-    request_server.reset(new_server);
-    request_server->bind(this);
+void client::bind(server &new_server) {
+    request_server.reset(&new_server);
+    request_server->bind(*this);
 }
 
 void client::unbind() {
@@ -118,7 +110,7 @@ void client::set_response(class http_response *rsp) {
     response.reset(rsp);
 }
 
-class http_response *client::get_response() {
+http_response * client::get_response() {
     return response.get();
 }
 
@@ -126,22 +118,22 @@ void client::set_request(class http_request *rsp) {
     request.reset(rsp);
 }
 
-class http_request *client::get_request() {
+http_request * client::get_request() {
     return request.get();
 }
 
-void client::read_request(proxy_server *proxyServer) {
-    if (socket.get_available_bytes() == 0){
+void client::read_request(proxy_server &proxyServer) {
+    if (socket.get_available_bytes() == 0) {
         event.remove_flag(EPOLLIN);
         return;
     }
     time.change_time(SOCKET_TIMEOUT);
     size_t read_cnt = read();
-    fprintf(stdout, "Read data from client, fd = %lu,size = %zu\n", get_fd().get_fd(), read_cnt);
+    std::cerr<<"Read data from client, fd = %lu,size = %zu\n", get_fd().get_fd(), read_cnt;
 
     std::unique_ptr<http_request> cur_request(new http_request(get_buffer()));
 
-    if (cur_request->get_stat() == http_request::BAD){
+    if (cur_request->get_stat() == http_request::BAD) {
         buffer = http_protocol::BAD_REQUEST();
         event.remove_flag(EPOLLIN);
         event.add_flag(EPOLLOUT);
@@ -149,7 +141,7 @@ void client::read_request(proxy_server *proxyServer) {
     }
 
     if (cur_request->is_ended()) {
-        fprintf(stdout, "Request for host [%s]\n", cur_request->get_host().c_str());
+        std::cerr<<"Request for host [%s]\n", cur_request->get_host().c_str();
 
         http_response *response = new http_response();
         set_response(response);
@@ -163,19 +155,19 @@ void client::read_request(proxy_server *proxyServer) {
                 request_server->add_flag(EPOLLOUT);
                 return;
             } else {
-                proxyServer->erase_server(get_server_fd().get_fd());
+                proxyServer.erase_server(get_server_fd().get_fd());
                 unbind();
             }
         }
 
         buffer = cur_request->get_data();
         cur_request->set_client_fd(get_fd().get_fd());
-        proxyServer->add_task(std::move(cur_request));
+        proxyServer.add_task(std::move(cur_request));
     }
 }
 
-void client::write_response(proxy_server *proxyServer) {
-    fprintf(stdout, "Writing data to client, fd = %lu\n", get_fd().get_fd());
+void client::write_response(proxy_server &proxyServer) {
+    std::cerr<< "Writing data to client, fd = %lu\n", get_fd().get_fd();
     time.change_time(SOCKET_TIMEOUT);
     write();
     if (has_server()) {
@@ -187,16 +179,17 @@ void client::write_response(proxy_server *proxyServer) {
 }
 
 
-void client::disconnect(proxy_server *proxyServer) {
-    fprintf(stdout, "Disconnect client, fd = %lu\n", get_fd().get_fd());
+void client::disconnect(proxy_server &proxyServer) {
+    std::cerr<<"Disconnect client, fd = %lu\n", get_fd().get_fd();
 
     event.remove_flag(EPOLLIN);
     event.remove_flag(EPOLLOUT);
 
     if (has_server()) {
-        fprintf(stdout, "Disconnect server, and client fd = %d\n", get_server_fd().get_fd());
-        proxyServer->erase_server(get_server_fd().get_fd());
+        std::cerr<<"Disconnect server, and client fd = %d\n", get_server_fd().get_fd();
+        proxyServer.erase_server(get_server_fd().get_fd());
+        unbind();
     }
 
-    proxyServer->erase_client(get_fd().get_fd());
+    proxyServer.erase_client(get_fd().get_fd());
 }

@@ -2,15 +2,18 @@
 // Created by bigz on 13.08.16.
 //
 
+#include <csignal>
 #include "resolver.h"
 
 resolver::resolver(size_t thread_count) {
     working = true;
     try {
         for (auto i = 0; i < thread_count; i++) {
-            threads.push_back(std::thread([this]() { this->resolve(); }));
+            threads.push_back(std::thread([this]() {
+                this->resolve();
+            }));
         };
-        fprintf(stdout, "All resolver threads started.\n");
+        std::cerr << "Resolver started with " << thread_count << " threads\n";
     } catch (...) {
         working = false;
         for (auto i = 0; i < threads.size(); i++) {
@@ -23,10 +26,14 @@ resolver::resolver(size_t thread_count) {
 }
 
 resolver::~resolver() {
+    std::cerr << "Stoping resolver\n";
     stop();
 }
 
 void resolver::resolve() {
+    sigset_t mask;
+    sigfillset(&mask);
+    sigprocmask(SIG_BLOCK, &mask, nullptr);
     while (working) {
 
         std::unique_lock<std::mutex> lock{lk};
@@ -38,7 +45,7 @@ void resolver::resolve() {
         if (!working) {
             return;
         }
-        std::cout << "In resolver\n";
+        std::cerr << "In resolver\n";
         auto request = std::move(tasks.front());
         tasks.pop();
 
@@ -71,7 +78,7 @@ void resolver::resolve() {
         lock.unlock();
 
         send();
-        std::cout<<"Resolve ended\n";
+        std::cerr << "Resolve ended\n";
     }
 }
 

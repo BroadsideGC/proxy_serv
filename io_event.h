@@ -33,7 +33,6 @@ private:
     uint32_t flags;
     epoll_io &service;
     file_descriptor &fd;
-    //timer
 
 };
 

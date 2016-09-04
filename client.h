@@ -26,7 +26,7 @@ public:
 
     client &operator=(client const &) = delete;
 
-    client(int fd, proxy_server* proxy);
+    client(int fd, proxy_server &proxy);
 
     ~client();
 
@@ -36,7 +36,7 @@ public:
 
     bool has_server();
 
-    void bind(server *new_server);
+    void bind(server &new_server);
 
     void unbind();
 
@@ -57,16 +57,16 @@ public:
 
     void set_response(http_response *new_response);
 
-    class http_response *get_response();
+    http_response * get_response();
 
     void set_request(http_request *new_request);
 
-    http_request *get_request();
+    http_request * get_request();
 
 private:
-    void read_request(proxy_server *proxyServer);
-    void write_response(proxy_server*);
-    void disconnect(proxy_server* proxyServer);
+    void read_request(proxy_server &proxyServer);
+    void write_response(proxy_server &);
+    void disconnect(proxy_server &proxyServer);
     std::string buffer;
     linux_socket socket;
     io_event event;

@@ -11,11 +11,9 @@
 
 
 struct file_descriptor {
-    ssize_t write_some(char *buffer, size_t size);
-
-    ssize_t read_some(char *buffer, size_t size);
 
 public:
+
     file_descriptor &operator=(const file_descriptor &rhs) = delete;
 
     file_descriptor(const file_descriptor &) = delete;
@@ -32,7 +30,9 @@ public:
     ~file_descriptor();
 
 
-    int get_flags();
+    ssize_t write_some(char *buffer, size_t size);
+
+    uint32_t get_flags();
 
     void set_flags(uint32_t nex_flags);
 

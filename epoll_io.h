@@ -32,18 +32,18 @@ public:
 
     void run();
 
-    void add(file_descriptor &fd, io_event *event, uint32_t flags);
+    void add(file_descriptor &fd, io_event &event, uint32_t flags);
 
-    void remove(file_descriptor &fd, io_event *event, uint32_t flags);
+    void remove(file_descriptor &fd, io_event &event, uint32_t flags);
 
-    void modify(file_descriptor &fd, io_event *event, uint32_t flags);
+    void modify(file_descriptor &fd, io_event &event, uint32_t flags);
 
     time_service &get_time_service();
 
 private:
     file_descriptor create_signal_fd(std::vector<uint8_t> signals);
 
-    void operate(int op, int fd, io_event *event, uint32_t flags);
+    void operate(int op, int fd, io_event &event, uint32_t flags);
 
     bool working;
     int epoll_fd;

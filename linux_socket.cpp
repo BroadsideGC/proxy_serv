@@ -15,7 +15,6 @@ linux_socket::linux_socket() : fd(-1) {
 
 linux_socket::linux_socket(int fd) : fd(fd) {
     set_flags(get_flags() | SOCK_STREAM | SOCK_NONBLOCK);
-   /// std::cout << "Socket created\n";
 }
 
 
@@ -35,11 +34,9 @@ void linux_socket::bind(sa_family_t sa_family, uint16_t port, in_addr_t s_addr) 
 }
 
 void linux_socket::listen() {
-    int result;
-    if (result = ::listen(fd.get_fd(), SOMAXCONN) == -1) {
+    if (::listen(fd.get_fd(), SOMAXCONN) == -1) {
         throw_server_error("Error in listen posix_socket");
     }
-   // std::cerr << result << "\n";
 }
 
 int linux_socket::accept() {
@@ -69,7 +66,7 @@ file_descriptor &linux_socket::get_fd() {
 }
 
 linux_socket::~linux_socket() {
-    //std::cout << "Socket destroyed\n";
+    //std::cerr << "Socket destroyed\n";
 }
 
 

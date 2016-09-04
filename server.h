@@ -26,7 +26,7 @@ public:
 
     server &operator=(const server &) = delete;
 
-    server(sockaddr sadddr, proxy_server *proxyServer, client *cl);
+    server(sockaddr sadddr, proxy_server &proxyServer, client &cl);
 
     ~server();
 
@@ -34,7 +34,7 @@ public:
 
     file_descriptor &get_client_fd();
 
-    void bind(client *client);
+    void bind(client &client);
 
     void append(std::string &);
 
@@ -57,11 +57,11 @@ public:
     std::string get_host();
 
 private:
-    void disconnect(proxy_server *proxyServer);
+    void disconnect(proxy_server &proxyServer);
 
-    void read_response(proxy_server *proxyServer);
+    void read_response(proxy_server &proxyServer);
 
-    void write_request(proxy_server *proxyServer);
+    void write_request(proxy_server &proxyServer);
 
     std::string buffer, host;
     linux_socket socket;

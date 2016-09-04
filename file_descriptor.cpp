@@ -12,11 +12,9 @@ file_descriptor::file_descriptor () : fd (-1) {
 
 
 file_descriptor::file_descriptor (int fd) : fd (fd) {
-   // std::cout<<"Created fd "<< fd<<"\n";
 }
 
 file_descriptor::~file_descriptor () {
-    //std::cout<<"Fd "<<fd<<" destroyed\n";
     close ();
 }
 
@@ -53,7 +51,7 @@ int &file_descriptor::get_fd () {
 }
 
 
-int file_descriptor::get_flags () {
+uint32_t file_descriptor::get_flags () {
     auto result = fcntl (fd, F_GETFD);
     if (result == -1) {
         throw_server_error("Error during getting");

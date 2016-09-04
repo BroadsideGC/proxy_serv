@@ -28,28 +28,24 @@ public:
     epoll_io& get_epoll();
 
     void run();
-    void terminate();
     void erase_server(int fd);
     void erase_client(int fd);
     void add_task(std::unique_ptr<http_request> request);
-    bool find_client(int fd);
     lru_cache<std::string, http_response>& get_cache();
-    size_t get_num_of_clients();
 
 
 private:
-    void connect_client(uint32_t);
-    void create_server(client * cl);
-    void resolver_handler(uint32_t events);
 
+    void connect_client();
+    void resolver_handler();
+
+    epoll_io epoll;
     bool working;
     linux_socket main_socket;
     std::map<uintptr_t, std::unique_ptr<client> > clients;
     std::map<uintptr_t, server* > servers;
     lru_cache<std::string, http_response> cache;
     file_descriptor pipe_fd;
-    file_descriptor conn;
-    epoll_io epoll;
     class resolver rslvr;
     std::unique_ptr<io_event> listen_event;
     std::unique_ptr<io_event> resolver_event;
