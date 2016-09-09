@@ -34,7 +34,6 @@ private:
     std::mutex lk;
     std::condition_variable condition;
     std::vector<std::thread> threads;
-    lru_cache<std::string, sockaddr> cache;
     std::queue<std::unique_ptr<http_request> > tasks, resolved;
     file_descriptor fd;
 

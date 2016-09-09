@@ -13,7 +13,7 @@ server::server(struct sockaddr addr, proxy_server &proxyServer, client &cl) : so
 
                                                                                       std::cerr << "Processing " << get_host() << " " << get_fd().get_fd() << "\n";
                                                                                       if (events & EPOLLIN) {
-                                                                                          std::cerr << "SERVER EPOLLIN\n";
+                                                                                          //std::cerr << "SERVER EPOLLIN\n";
                                                                                           read_response(proxyServer);
                                                                                       }
                                                                                       if (events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
@@ -22,7 +22,7 @@ server::server(struct sockaddr addr, proxy_server &proxyServer, client &cl) : so
                                                                                           return;
                                                                                       }
                                                                                       if (events & EPOLLOUT) {
-                                                                                          std::cerr << "SERVER EPOLLOUT\n";
+                                                                                          //std::cerr << "SERVER EPOLLOUT\n";
                                                                                           write_request(proxyServer);
                                                                                       }
 
@@ -89,9 +89,6 @@ size_t server::write() {
 std::string server::read() {
     assert(paired_client);
     std::cerr << "Paired client " << paired_client->get_fd().get_fd() << "\n";
-    /*if (paired_client->get_buffer_size() >= client::BUFFER_SIZE) {
-        return "";
-    }*/
     try {
         std::string data = socket.read(socket.get_available_bytes());
         buffer.append(data);
@@ -123,7 +120,8 @@ void server::disconnect(proxy_server &proxyServer) {
 
     event.remove_flag(EPOLLIN);
     event.remove_flag(EPOLLOUT);
-    std::cerr<<"Disconnect server, fd = %lu, host = [%s]\n", get_fd().get_fd(), get_host().c_str();
+    std::cerr<<"Disconnect server "<<get_fd().get_fd()<< " "<<get_host().c_str()<<"\n";
+
     paired_client->unbind();
 
     proxyServer.erase_server(get_fd().get_fd());
@@ -134,7 +132,7 @@ void server::disconnect(proxy_server &proxyServer) {
 }
 
 void server::read_response(proxy_server &proxyServer) {
-    std::cerr<<"Read data from server, fd = %lu, size = %ld\n", get_fd().get_fd(), socket.get_available_bytes();
+    std::cerr<<"Read data from server, fd = "<< get_fd().get_fd()<<"\n";
 
     time.change_time(CONNECTION_TIMEOUT);
 
@@ -144,7 +142,7 @@ void server::read_response(proxy_server &proxyServer) {
 
     cur_response->append(data);
 
-    std::cerr << "State: " << cur_response->get_stat() << "\n";
+    //std::cerr << "State: " << cur_response->get_stat() << "\n";
 
     if (cur_response->get_stat() == http_response::BAD) {
         buffer = http_protocol::BAD_REQUEST();
@@ -160,8 +158,9 @@ void server::read_response(proxy_server &proxyServer) {
     if (cur_response->is_ended()) {
         std::string cache_key = paired_client->get_request()->get_host() + paired_client->get_request()->get_relative_URI();
         // check cache hit
+        //std::cerr<<cur_response->get_status()<<'\n';
         if (cur_response->get_status() == "304" && proxyServer.get_cache().contains(cache_key)) {
-            std::cerr<<"Cache hit for URI [%s]\n", cache_key.c_str();
+            std::cerr<<"Cache hit for URI " <<cache_key.c_str()<<"\n";
 
             http_response cached_response = proxyServer.get_cache().get(cache_key);
             get_buffer() = cached_response.get_data();
@@ -170,7 +169,7 @@ void server::read_response(proxy_server &proxyServer) {
         // try cache
         if (cur_response->is_cacheable() && !proxyServer.get_cache().contains(cache_key)) {
             proxyServer.get_cache().put(cache_key, *cur_response);
-            std::cerr<<"Response for URI [%s] added to cache.\n", cache_key.c_str();
+            std::cerr<<"Response added to cache for "<< cache_key.c_str()<<"\n";
         }
 
         push_to_client();
@@ -180,7 +179,7 @@ void server::read_response(proxy_server &proxyServer) {
 }
 
 void server::write_request(proxy_server &proxyServer) {
-    std::cerr<<"Writing data to server, fd = %lu\n", get_fd().get_fd();
+    std::cerr<<"Writing data to server, fd = "<< get_fd().get_fd()<<"\n";
     time.change_time(CONNECTION_TIMEOUT);
 
     int error;

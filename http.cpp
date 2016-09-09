@@ -55,11 +55,11 @@ void http_protocol::parse_headers(std::string text_headers) {
         
         while (headers_end != text_headers.end() && *headers_end != '\r') {
             auto space = std::find_if(headers_end, text_headers.end(), [](char a) { return a == ':'; });
-            auto crlf = std::find_if(space + 1, text_headers.end(), [](char a) { return a == '\r'; });
-            auto shift=2;
+            auto shift=1;
             while (*(space+shift) == ' ')shift++;
+            auto crlf = std::find_if(space + shift, text_headers.end(), [](char a) { return a == '\r'; });
             headers.insert({{headers_end, space}, {space + shift, crlf}});
-            headers_end = crlf + shift;
+            headers_end = crlf + 2;
         };
         state = HEADERS;
     }

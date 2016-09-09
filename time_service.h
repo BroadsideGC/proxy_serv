@@ -7,8 +7,8 @@
 #include <functional>
 #include <map>
 
-const std::chrono::seconds SOCKET_TIMEOUT = std::chrono::seconds(300);
-const std::chrono::seconds CONNECTION_TIMEOUT = std::chrono::seconds(120);
+const std::chrono::seconds SOCKET_TIMEOUT = std::chrono::seconds(3);
+const std::chrono::seconds CONNECTION_TIMEOUT = std::chrono::seconds(1);
 typedef std::chrono::steady_clock steady_clock_t;
 typedef std::function<void()> callback_t;
 

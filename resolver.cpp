@@ -67,11 +67,10 @@ void resolver::resolve() {
             host = *res->ai_addr;
             freeaddrinfo(res);
             lock.lock();
-            cache.put(request->get_host(), host);
             lock.unlock();
         }
         request->set_resolved_host(host);
-        fprintf(stdout, "Host [%s] resolved!\n", request->get_host().c_str());
+        std::cerr << "Host resolved! " << request->get_host().c_str() << "\n";
 
         lock.lock();
         resolved.push(std::move(request));

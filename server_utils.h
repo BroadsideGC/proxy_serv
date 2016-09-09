@@ -16,7 +16,6 @@
 #include <stdlib.h>
 
 
-
 void throw_server_error(std::string msg);
 
 #endif //PROXY_UTILS_H

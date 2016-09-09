@@ -91,8 +91,8 @@ void proxy_server::resolver_handler() {
 
     srvr->set_host(cur_request->get_host());
     cur_client->bind(*srvr);
-    std::cerr << ("Server with fd = %d binded to client with fd = %d\n", srvr->get_fd().get_fd(),
-            cur_client->get_fd().get_fd());
+    //std::cerr << "Server with fd = %d binded to client with fd = %d\n", srvr->get_fd().get_fd(),
+          //  cur_client->get_fd().get_fd());
     srvr->add_flag(EPOLLOUT);
     servers[srvr->get_fd().get_fd()] = srvr;
     std::cerr << servers.size() << " servers now\n";
@@ -101,7 +101,7 @@ void proxy_server::resolver_handler() {
 }
 
 void proxy_server::erase_server(int fd) {
-    std::cerr << ("Erasing server, fd = %lu, host = [%s]\n", fd, servers[fd]->get_host().c_str());
+    //std::cerr << ("Erasing server, fd = %lu, host = [%s]\n", fd, servers[fd]->get_host().c_str());
     servers.erase(fd);
     std::cerr << servers.size() << " servers left\n";
 }
@@ -112,7 +112,7 @@ void proxy_server::add_task(std::unique_ptr<http_request> request) {
 }
 
 void proxy_server::erase_client(int fd) {
-    std::cerr << "Erasing client " << "\n";
+    //std::cerr << "Erasing client " << "\n";
     clients.erase(fd);
     std::cerr << clients.size() << " clients left\n";
 }
