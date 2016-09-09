@@ -4,21 +4,20 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/epoll_io.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/io_event.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/lru_cache.hpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/resolver.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/time_service.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/epoll_io.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/server_utils.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/linux_socket.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/file_descriptor.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/client.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/server.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/lru_cache.hpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/proxy_server.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/linux_socket.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/http.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/time_service.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/server.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/resolver.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/http.hpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/timer.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/CMakeLists.txt" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/server.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/main.cpp" isTestSource="false" />
@@ -26,7 +25,7 @@
       <sourceFolder url="file://$MODULE_DIR$/proxy_server.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/file_descriptor.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/io_event.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/linux_socket.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/client.cpp" isTestSource="false" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">

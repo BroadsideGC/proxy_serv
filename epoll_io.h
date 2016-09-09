@@ -10,7 +10,6 @@
 #include <memory>
 #include "file_descriptor.h"
 #include "io_event.h"
-#include "time_service.h"
 
 const int DEFAULT_EPOLL_TIMEOUT = 10000;
 const int MAX_EPOLL_EVENTS_COUNT = 1000;
@@ -38,8 +37,6 @@ public:
 
     void modify(file_descriptor &fd, io_event &event, uint32_t flags);
 
-    time_service &get_time_service();
-
 private:
     file_descriptor create_signal_fd(std::vector<uint8_t> signals);
 
@@ -48,8 +45,6 @@ private:
     bool working;
     int epoll_fd;
     std::set<io_event *> available;
-
-    time_service timeService;
 
 };
 

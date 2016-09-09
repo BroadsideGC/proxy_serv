@@ -117,8 +117,4 @@ file_descriptor epoll_io::create_signal_fd(std::vector<uint8_t> signals) {
     return file_descriptor(signal_fd);
 }
 
-time_service &epoll_io::get_time_service() {
-    return timeService;
-}
-
 

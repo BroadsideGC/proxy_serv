@@ -15,12 +15,14 @@
 #include "io_event.h"
 #include <queue>
 #include "proxy_server.h"
+#include "timer.h"
 
 class proxy_server;
 
 class client {
     friend class proxy_server;
     friend class server;
+    friend class timer<client>;
 public:
     client(const client &) = delete;
 
@@ -70,7 +72,7 @@ private:
     std::string buffer;
     linux_socket socket;
     io_event event;
-    timer time;
+    timer<client> time;
     std::unique_ptr<server> request_server;
     std::unique_ptr<http_response> response;
     std::unique_ptr<http_request> request;

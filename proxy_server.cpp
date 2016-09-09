@@ -19,16 +19,7 @@ proxy_server::proxy_server(int port) : main_socket(::socket(AF_INET, SOCK_STREAM
     main_socket.get_fd().make_nonblocking();
     std::cerr << "Listening started\n";
     main_socket.set_flags(main_socket.get_flags() | EPOLLIN);
-    int fd[2];
-    pipe(fd);
-    pipe_fd = file_descriptor(fd[0]);
-    file_descriptor resolver_fd(fd[1]);
-
-    pipe_fd.make_nonblocking();
-    resolver_fd.make_nonblocking();
-    rslvr.set_fd(std::move(resolver_fd));
-    // std::cerr << "Resolver fds: " << rslvr.get_fd().get_fd() << " " << pipe_fd.get_fd() << "\n";
-    resolver_event = std::make_unique<io_event>(epoll, pipe_fd, EPOLLIN,
+    resolver_event = std::make_unique<io_event>(epoll, rslvr.get_fd(), EPOLLIN,
                                                 [this](uint32_t events)mutable throw(std::runtime_error) {
                                                     std::cerr << "Resolver handler\n";
                                                     this->resolver_handler();
@@ -64,8 +55,9 @@ epoll_io &proxy_server::get_epoll() {
 }
 
 void proxy_server::resolver_handler() {
-    char tmp;
-    if (read(pipe_fd.get_fd(), &tmp, sizeof(tmp)) == -1) {
+    eventfd_t* tmp;
+
+    if (eventfd_read(rslvr.get_fd().get_fd(), tmp) == -1) {
         perror("Reading from resolver failed");
     }
 
@@ -87,7 +79,7 @@ void proxy_server::resolver_handler() {
         throw_server_error("Error while connecting to server!");
     }
 
-    cur_client->time.change_time(SOCKET_TIMEOUT);
+    cur_client->time.reset();
 
     srvr->set_host(cur_request->get_host());
     cur_client->bind(*srvr);

@@ -16,6 +16,5 @@ set(SOURCE_FILES main.cpp
         resolver.cpp resolver.h
         client.h client.cpp
         server.h server.cpp
-
-        time_service.cpp time_service.h)
+        timer.h)
 add_executable(proxy ${SOURCE_FILES})

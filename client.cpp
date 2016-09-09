@@ -1,6 +1,5 @@
 #include "client.h"
 #include <cassert>
-#include <sys/epoll.h>
 
 client::client(int fd, proxy_server &proxyServer) : socket(fd), request_server(nullptr),
                                                     event(proxyServer.get_epoll(), get_fd(), EPOLLIN,
@@ -25,12 +24,7 @@ client::client(int fd, proxy_server &proxyServer) : socket(fd), request_server(n
                                                                   disconnect(proxyServer);
                                                               }
 
-                                                          }), time(proxyServer.get_epoll().get_time_service(), SOCKET_TIMEOUT, [&proxyServer, this]() {
-            std::cerr << "Timeout client\n";
-            disconnect(proxyServer);
-
-        }) {
-
+                                                          }), time(proxyServer.get_epoll(), *this, proxyServer) {
 };
 
 client::~client() {
@@ -127,7 +121,7 @@ void client::read_request(proxy_server &proxyServer) {
         event.remove_flag(EPOLLIN);
         return;
     }
-    time.change_time(SOCKET_TIMEOUT);
+    time.reset();
     read();
     std::cerr << "Read data from client, fd = " << get_fd().get_fd() << '\n';
 
@@ -176,7 +170,7 @@ void client::read_request(proxy_server &proxyServer) {
 
 void client::write_response(proxy_server &proxyServer) {
     std::cerr << "Writing data to client, fd = " << get_fd().get_fd() << "\n";
-    time.change_time(SOCKET_TIMEOUT);
+    time.reset();
     write();
     if (get_buffer_size() == 0) {
         event.remove_flag(EPOLLOUT);

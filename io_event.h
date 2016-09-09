@@ -22,6 +22,9 @@ public:
 
     ~io_event();
 
+    file_descriptor& get_fd(){
+        return fd;
+    }
 
     void add_flag(uint32_t flag);
 
@@ -33,7 +36,6 @@ private:
     uint32_t flags;
     epoll_io &service;
     file_descriptor &fd;
-
 };
 
 

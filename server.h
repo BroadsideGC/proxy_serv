@@ -11,15 +11,20 @@
 #include "file_descriptor.h"
 #include "linux_socket.h"
 #include "client.h"
+#include "proxy_server.h"
 #include "io_event.h"
 #include <arpa/inet.h>
+#include "timer.h"
 
 class proxy_server;
 
-class client;
 
 class server {
+    friend class proxy_server;
 
+   // friend class client;
+
+    friend class timer<server>;
 
 public:
     server(const server &) = delete;
@@ -63,9 +68,9 @@ private:
 
     void write_request(proxy_server &proxyServer);
 
+    timer<server> time;
     std::string buffer, host;
     linux_socket socket;
-    timer time;
     io_event event;
     client *paired_client;
 
