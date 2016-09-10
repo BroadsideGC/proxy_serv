@@ -7,7 +7,7 @@
 
 resolver::resolver(size_t thread_count) {
     working = true;
-    fd = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
+    fd = eventfd(0, EFD_NONBLOCK|EFD_SEMAPHORE);
     try {
         for (auto i = 0; i < thread_count; i++) {
             threads.push_back(std::thread([this]() {
@@ -85,9 +85,7 @@ void resolver::resolve() {
 
 void resolver::send() {
     std::unique_lock<std::mutex> lock{lk};
-    //char tmp = 'a';
-    //ssize_t cnt = fd.write_some(&tmp, sizeof(tmp));
-    if (auto cnt = eventfd_write(fd.get_fd(), 1) == -1) {
+    if (eventfd_write(fd.get_fd(), 1) == -1) {
         lock.unlock();
         perror("Resolver: error while sending message to proxy server");
     }

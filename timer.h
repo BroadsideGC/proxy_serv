@@ -18,6 +18,7 @@
 #define TIMEOUT 180
 
 class proxy_server;
+
 class client;
 
 class server;
@@ -38,7 +39,7 @@ public:
     }
 
     ~timer() {
-       // std::cerr<<"Remove timer\n";
+        // std::cerr<<"Remove timer\n";
     }
 
     void reset() {

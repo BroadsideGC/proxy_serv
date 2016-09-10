@@ -58,7 +58,7 @@ void proxy_server::resolver_handler() {
     eventfd_t* tmp;
 
     if (eventfd_read(rslvr.get_fd().get_fd(), tmp) == -1) {
-        perror("Reading from resolver failed");
+        perror("Reading from resolver failed\n");
     }
 
     std::unique_ptr<http_request> cur_request = rslvr.get_task();
