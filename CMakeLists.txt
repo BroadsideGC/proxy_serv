@@ -7,12 +7,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -pthread")
 set(SOURCE_FILES main.cpp
         file_descriptor.cpp file_descriptor.h
         linux_socket.cpp linux_socket.h
-        server_utils.cpp server_utils.h
+        server_utils.h
         proxy_server.cpp proxy_server.h
         epoll_io.cpp epoll_io.h
         io_event.cpp io_event.h
         http.hpp http.cpp
-        lru_cache.hpp
+        lru_cache.h
         resolver.cpp resolver.h
         client.h client.cpp
         server.h server.cpp

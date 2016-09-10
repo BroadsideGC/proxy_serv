@@ -393,33 +393,6 @@ server.cpp.s:
 	$(MAKE) -f CMakeFiles/proxy.dir/build.make CMakeFiles/proxy.dir/server.cpp.s
 .PHONY : server.cpp.s
 
-server_utils.o: server_utils.cpp.o
-
-.PHONY : server_utils.o
-
-# target to build an object file
-server_utils.cpp.o:
-	$(MAKE) -f CMakeFiles/proxy.dir/build.make CMakeFiles/proxy.dir/server_utils.cpp.o
-.PHONY : server_utils.cpp.o
-
-server_utils.i: server_utils.cpp.i
-
-.PHONY : server_utils.i
-
-# target to preprocess a source file
-server_utils.cpp.i:
-	$(MAKE) -f CMakeFiles/proxy.dir/build.make CMakeFiles/proxy.dir/server_utils.cpp.i
-.PHONY : server_utils.cpp.i
-
-server_utils.s: server_utils.cpp.s
-
-.PHONY : server_utils.s
-
-# target to generate assembly for a file
-server_utils.cpp.s:
-	$(MAKE) -f CMakeFiles/proxy.dir/build.make CMakeFiles/proxy.dir/server_utils.cpp.s
-.PHONY : server_utils.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -459,9 +432,6 @@ help:
 	@echo "... server.o"
 	@echo "... server.i"
 	@echo "... server.s"
-	@echo "... server_utils.o"
-	@echo "... server_utils.i"
-	@echo "... server_utils.s"
 .PHONY : help
 
 

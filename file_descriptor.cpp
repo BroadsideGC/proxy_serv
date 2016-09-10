@@ -3,7 +3,6 @@
 //
 
 #include "file_descriptor.h"
-#include "string.h"
 
 file_descriptor::file_descriptor () : fd (-1) {
 
@@ -16,16 +15,6 @@ file_descriptor::file_descriptor (int fd) : fd (fd) {
 
 file_descriptor::~file_descriptor () {
     close ();
-}
-
-ssize_t file_descriptor::write_some (char *buffer, size_t size) {
-    ssize_t res = ::write (fd, buffer, size);
-    if (res == -1) {
-        if (errno != EAGAIN && errno != EWOULDBLOCK) {
-            throw_server_error("Error in write_some");
-        }
-    }
-    return res;
 }
 
 void file_descriptor::make_nonblocking () {

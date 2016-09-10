@@ -19,12 +19,12 @@ proxy_server::proxy_server(int port) : main_socket(::socket(AF_INET, SOCK_STREAM
     main_socket.get_fd().make_nonblocking();
     std::cerr << "Listening started\n";
     main_socket.set_flags(main_socket.get_flags() | EPOLLIN);
-    resolver_event = std::make_unique<io_event>(epoll, rslvr.get_fd(), EPOLLIN,
+    std::make_unique<io_event>(epoll, rslvr.get_fd(), EPOLLIN,
                                                 [this](uint32_t events)mutable throw(std::runtime_error) {
                                                     std::cerr << "Resolver handler\n";
                                                     this->resolver_handler();
                                                 });
-    listen_event = std::unique_ptr<io_event>(new io_event(epoll, main_socket.get_fd(), EPOLLIN,
+    std::unique_ptr<io_event>(new io_event(epoll, main_socket.get_fd(), EPOLLIN,
                                                           [this](uint32_t events)mutable throw(std::runtime_error) {
                                                               connect_client();
                                                           }));
@@ -57,8 +57,8 @@ epoll_io &proxy_server::get_epoll() {
 void proxy_server::resolver_handler() {
     eventfd_t* tmp;
 
-    if (eventfd_read(rslvr.get_fd().get_fd(), tmp) == -1) {
-        perror("Reading from resolver failed\n");
+    if (eventfd_read(rslvr.get_fd().get_fd(), tmp) < 0) {
+        perror("Reading from resolver failed");
     }
 
     std::unique_ptr<http_request> cur_request = rslvr.get_task();

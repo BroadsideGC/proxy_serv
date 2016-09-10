@@ -27,10 +27,10 @@ template<typename type_t>
 class timer {
 public:
 
-    timer(epoll_io &epp, type_t &side, proxy_server &proxyServer) : side(side), fd(timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC)), event(epp, fd.get_fd(), EPOLLIN, [this, &side, &proxyServer](uint32_t) {
+    timer(epoll_io &epp, type_t &side, proxy_server &proxyServer) : side(side), fd(timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC)), event(epp, fd, EPOLLIN, [this, &side, &proxyServer](uint32_t) {
         std::cerr << "Timer Timeout\n";
         char buf[8];
-        read(fd.get_fd().get_fd(), buf, 8);
+        read(fd.get_fd(), buf, 8);
         side.disconnect(proxyServer);
         return;
     }) {
@@ -50,7 +50,7 @@ public:
         timeout.it_interval.tv_sec = TIMEOUT;
         /* recurring */
         timeout.it_interval.tv_nsec = 0;
-        auto ret = timerfd_settime(fd.get_fd().get_fd(), 0, &timeout, NULL);
+        auto ret = timerfd_settime(fd.get_fd(), 0, &timeout, NULL);
         //std::cerr << "Timeout set " << TIMEOUT << '\n';
         if (ret) {
             throw_server_error("Failed to set timeout");
@@ -59,7 +59,7 @@ public:
 
 private:
     type_t &side;
-    linux_socket fd;
+    file_descriptor fd;
     io_event event;
 };
 

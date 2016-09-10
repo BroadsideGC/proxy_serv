@@ -88,7 +88,6 @@ bool http_protocol::is_ended() {
 }
 
 std::string http_protocol::get_data() {
-    std::string dd = get_start_line() + "\r\n" + get_headers() + "\r\n" + get_body();
     return get_start_line() + "\r\n" + get_headers() + "\r\n" + get_body();
 }
 

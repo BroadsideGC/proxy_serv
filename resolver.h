@@ -12,7 +12,7 @@
 #include <queue>
 #include "sys/eventfd.h"
 #include "http.hpp"
-#include "lru_cache.hpp"
+#include "lru_cache.h"
 #include "file_descriptor.h"
 
 class resolver {

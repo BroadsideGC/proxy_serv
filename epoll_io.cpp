@@ -4,7 +4,6 @@
 
 #include <sys/epoll.h>
 #include "epoll_io.h"
-#include <assert.h>
 #include <csignal>
 #include "sys/signalfd.h"
 
@@ -20,13 +19,13 @@ epoll_io::epoll_io() {
 void epoll_io::run() {
 
     working = true;
-    file_descriptor signal_fd = create_signal_fd({SIGINT, SIGTERM});
+    file_descriptor signal_fd = create_signal_fd();
     io_event signal_event(*this, signal_fd, EPOLLIN, [this](uint32_t) {
         perror("Signal caught\n");
         this->working = false;
     });
     epoll_event events[MAX_EPOLL_EVENTS_COUNT];
-    std::cerr<<"Еполл крутится, клиенты мутятся\n";
+    std::cerr << "Еполл крутится, клиенты мутятся\n";
     while (working) {
         //printf("Щя послушаем\n");
         auto events_count = epoll_wait(epoll_fd, events, MAX_EPOLL_EVENTS_COUNT, DEFAULT_EPOLL_TIMEOUT);
@@ -72,8 +71,8 @@ void epoll_io::modify(file_descriptor &fd, io_event &event, uint32_t flags) {
 epoll_io::~epoll_io() {
     //std::cerr<<"Destroing epoll\n";
     close(epoll_fd);
-   // available.clear();
-    std::cerr<<"No more epoll\n";
+    // available.clear();
+    std::cerr << "No more epoll\n";
 }
 
 
@@ -85,7 +84,7 @@ void epoll_io::operate(int op, int fd, io_event &event, uint32_t flags) {
 
     if (epoll_ctl(epoll_fd, op, fd, &e_event) == -1) {
         //std::cerr << "Epoll fd: " << epoll_fd << "\n";
-        throw_server_error("Error in during operation on epoll_io event "+std::to_string(fd));
+        throw_server_error("Error in during operation on epoll_io event " + std::to_string(fd));
     }
 
 }
@@ -96,13 +95,14 @@ int &epoll_io::get_fd() {
 }
 
 
-file_descriptor epoll_io::create_signal_fd(std::vector<uint8_t> signals) {
+file_descriptor epoll_io::create_signal_fd() {
     sigset_t mask;
     sigemptyset(&mask);
-    for (auto i = 0; i < signals.size(); i++) {
-        if (sigaddset(&mask, signals[i]) == -1) {
-            std::cerr << "Not valid signal to block" << signals[i] << "\n";
-        }
+    if (sigaddset(&mask, SIGINT) == -1) {
+        std::cerr << "Not valid signal to block" << SIGINT << "\n";
+    }
+    if (sigaddset(&mask, SIGTERM) == -1) {
+        std::cerr << "Not valid signal to block" << SIGTERM << "\n";
     }
 
     if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1) {

@@ -1,7 +1,7 @@
 
 
-#ifndef lru_cache_hpp
-#define lru_cache_hpp
+#ifndef lru_cache_h
+#define lru_cache_h
 
 #include <stdio.h>
 #include <list>
@@ -16,11 +16,7 @@ public:
     typedef typename std::list<pair>::iterator iterator;
     
     lru_cache(size_t max_capacity = 512) : capacity(max_capacity) { }
-    
-    size_t max_capacity() {
-        return capacity;
-    }
-    
+
     size_t size() {
         return list.size();
     }
@@ -64,4 +60,4 @@ private:
     std::map<key_t, iterator> iterators;
 };
 
-#endif /* lru_cache_hpp */
+#endif /* lru_cache_h */

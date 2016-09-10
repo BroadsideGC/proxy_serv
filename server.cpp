@@ -1,10 +1,8 @@
 
 
 #include "server.h"
-#include "linux_socket.h"
 
 #include <cassert>
-#include <sys/epoll.h>
 
 server::server(struct sockaddr addr, proxy_server &proxyServer, client &cl) : socket(linux_socket(::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0))),
                                                                               event(io_event(proxyServer.get_epoll(), socket.get_fd(), EPOLLOUT, [this, &proxyServer](uint32_t events)mutable throw(std::runtime_error) {
@@ -111,9 +109,6 @@ server::~server() {
 }
 
 void server::disconnect(proxy_server &proxyServer) {
-
-    event.remove_flag(EPOLLIN);
-    event.remove_flag(EPOLLOUT);
     std::cerr << "Disconnect server " << get_fd().get_fd() << " " << get_host().c_str() << "\n";
 
     paired_client->unbind();

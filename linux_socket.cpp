@@ -81,9 +81,8 @@ size_t linux_socket::write(std::string const &msg) {
 
 std::string linux_socket::read(size_t buffer_size) {
     std::vector<char> buffer(buffer_size);
-    ssize_t len;
 
-    if ((len = recv(get_fd().get_fd(), buffer.data(), buffer_size, 0)) == -1) {
+    if ((recv(get_fd().get_fd(), buffer.data(), buffer_size, 0)) == -1) {
         throw_server_error("Error while reading!");
     }
 

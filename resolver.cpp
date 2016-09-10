@@ -7,7 +7,7 @@
 
 resolver::resolver(size_t thread_count) {
     working = true;
-    fd = eventfd(0, EFD_NONBLOCK|EFD_SEMAPHORE);
+    fd = eventfd(0, EFD_SEMAPHORE);
     try {
         for (auto i = 0; i < thread_count; i++) {
             threads.push_back(std::thread([this]() {
@@ -58,7 +58,7 @@ void resolver::resolve() {
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_flags = AI_PASSIVE;
 
-        int err_no = getaddrinfo(request->get_host().c_str(), request->get_port().c_str(), &hints, &res);
+        auto err_no = getaddrinfo(request->get_host().c_str(), request->get_port().c_str(), &hints, &res);
 
         sockaddr host;
 
@@ -107,13 +107,11 @@ void resolver::add_task(std::unique_ptr<http_request> request) {
     if (!working) {
         throw_server_error("Resolver doesn't running!");
     }
-    std::unique_lock<std::mutex> lock{lk};
     tasks.push(std::move(request));
     condition.notify_one();
 }
 
 std::unique_ptr<http_request> resolver::get_task() {
-    std::unique_lock<std::mutex> lock{lk};
     auto request = std::move(resolved.front());
     resolved.pop();
     return request;

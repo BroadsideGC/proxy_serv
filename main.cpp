@@ -1,6 +1,5 @@
 
 #include <iostream>
-#include <thread>
 
 #include "proxy_server.h"
 

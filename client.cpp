@@ -180,10 +180,6 @@ void client::write_response(proxy_server &proxyServer) {
 
 void client::disconnect(proxy_server &proxyServer) {
     std::cerr << "Disconnect client, fd = " << get_fd().get_fd() << "\n";
-
-    event.remove_flag(EPOLLIN);
-    event.remove_flag(EPOLLOUT);
-
     if (has_server()) {
         //std::cerr<<"Disconnect server, and client fd = %d\n", get_server_fd().get_fd();
         proxyServer.erase_server(get_server_fd().get_fd());

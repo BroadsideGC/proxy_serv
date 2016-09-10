@@ -38,7 +38,7 @@ public:
     void modify(file_descriptor &fd, io_event &event, uint32_t flags);
 
 private:
-    file_descriptor create_signal_fd(std::vector<uint8_t> signals);
+    file_descriptor create_signal_fd();
 
     void operate(int op, int fd, io_event &event, uint32_t flags);
 

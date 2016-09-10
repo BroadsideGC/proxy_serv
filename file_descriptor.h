@@ -30,8 +30,6 @@ public:
     ~file_descriptor();
 
 
-    ssize_t write_some(char *buffer, size_t size);
-
     uint32_t get_flags();
 
     void set_flags(uint32_t nex_flags);
