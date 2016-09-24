@@ -41,6 +41,8 @@ public:
 
     void bind(client &client);
 
+    void unbind();
+
     void append(std::string &);
 
     std::string &get_buffer();
@@ -68,8 +70,8 @@ private:
 
     void write_request(proxy_server &proxyServer);
 
-    timer<server> time;
     std::string buffer, host;
+    timer<server> time;
     linux_socket socket;
     io_event event;
     client *paired_client;

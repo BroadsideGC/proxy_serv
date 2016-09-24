@@ -9,7 +9,7 @@
 #include "proxy_server.h"
 
 proxy_server::proxy_server(int port) : main_socket(::socket(AF_INET, SOCK_STREAM, 0)),
-                                       rslvr(sysconf(_SC_NPROCESSORS_ONLN)*2) {
+                                       rslvr(/*sysconf(_SC_NPROCESSORS_ONLN)*/3) {
     std::cerr << "Proxy started at port: " << port << "\n";
     //std::cerr << epoll.get_fd() << '\n';
     int one = 1;
@@ -20,12 +20,12 @@ proxy_server::proxy_server(int port) : main_socket(::socket(AF_INET, SOCK_STREAM
     std::cerr << "Listening started\n";
     main_socket.set_flags(main_socket.get_flags() | EPOLLIN);
     listen_event = std::unique_ptr<io_event>(new io_event(epoll, main_socket.get_fd(), EPOLLIN,
-                                                          [this](uint32_t events)mutable throw(std::runtime_error) {
+                                                          [this](uint32_t events){
                                                               connect_client();
                                                           }));
     std::cerr << "Main listener added to epoll!\n";
     resolver_event = std::unique_ptr<io_event>(new io_event(epoll, rslvr.get_fd(), EPOLLIN,
-                                                [this](uint32_t events)mutable throw(std::runtime_error) {
+                                                [this](uint32_t events) {
                                                     std::cerr << "Resolver handler\n";
                                                     this->resolver_handler();
                                                 }));
@@ -63,7 +63,7 @@ void proxy_server::resolver_handler() {
     }
 
     std::unique_ptr<http_request> cur_request = rslvr.get_task();
-    std::cerr << "Resolver callback called for host" << cur_request->get_host().c_str() << "\n";
+    std::cerr << "Resolver callback called for host " << cur_request->get_host().c_str() << "\n";
 
     client *cur_client = clients[cur_request->get_client_fd()].get();
 

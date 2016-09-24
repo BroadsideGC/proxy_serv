@@ -8,7 +8,7 @@ using namespace std;
 
 
 int main() {
-   // freopen("/home/bigz/proxy/debug.txt", "w", stdout);
+   // freopen("debug.txt", "w", stderr);
    proxy_server server(8080);
     server.run();
     return 0;

@@ -28,7 +28,7 @@ client::client(int fd, proxy_server &proxyServer) : socket(fd), request_server(n
 };
 
 client::~client() {
-    // std::cerr<<"Client destroyed\n";
+ std::cerr<<"Client destroyed" <<get_fd().get_fd()<<"\n";
 }
 
 file_descriptor &client::get_fd() {
@@ -86,7 +86,10 @@ void client::bind(server &new_server) {
 }
 
 void client::unbind() {
-    request_server.reset(nullptr);
+    if (request_server!=nullptr){
+        request_server.reset(nullptr);
+    }
+    std::cerr<<"Reset "<<socket.get_fd().get_fd()<<"\n";
 }
 
 void client::flush_client_buffer() {
@@ -173,7 +176,9 @@ void client::write_response(proxy_server &proxyServer) {
     write();
     if (get_buffer_size() == 0) {
         event.remove_flag(EPOLLOUT);
-        event.add_flag(EPOLLIN);
+        if (request_server){
+            event.add_flag(EPOLLIN);
+        }
     }
 }
 
@@ -182,9 +187,10 @@ void client::disconnect(proxy_server &proxyServer) {
     std::cerr << "Disconnect client, fd = " << get_fd().get_fd() << "\n";
     if (has_server()) {
         //std::cerr<<"Disconnect server, and client fd = %d\n", get_server_fd().get_fd();
-        proxyServer.erase_server(get_server_fd().get_fd());
+        ///proxyServer.erase_server(get_server_fd().get_fd());
+        request_server->unbind();
+        //request_server->disconnect();
         unbind();
     }
-
     proxyServer.erase_client(get_fd().get_fd());
 }

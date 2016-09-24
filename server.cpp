@@ -105,16 +105,23 @@ void server::push_to_client() {
 
 
 server::~server() {
-    //std::cerr<<"Deleting server\n";
+    std::cerr<<"Destroing server\n";
+     //proxyServer.erase_server( get_fd().get_fd());
 }
 
 void server::disconnect(proxy_server &proxyServer) {
-    std::cerr << "Disconnect server " << get_fd().get_fd() << " " << get_host().c_str() << "\n";
-
-    paired_client->unbind();
-
-    proxyServer.erase_server(get_fd().get_fd());
-
+    std::cerr << "Disconnect server " << get_fd().get_fd()<<get_host() << "\n";
+    int sfd = get_fd().get_fd();
+     proxyServer.erase_server(sfd);
+    if (paired_client->request_server.get() == this){
+        paired_client->unbind();
+        //std::cerr<<"Test3\n";
+    }
+   /* std::cerr<<"Test\n";
+    if (paired_client != nullptr){
+       
+    }
+    std::cerr<<"Test2\n";*/
 }
 
 void server::read_response(proxy_server &proxyServer) {
@@ -191,5 +198,9 @@ void server::add_flag(uint32_t flag) {
 
 void server::bind(client &new_client) {
     paired_client = &new_client;
+}
+
+void server::unbind() {
+    paired_client = nullptr;
 }
 
