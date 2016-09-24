@@ -118,7 +118,6 @@ http_request *client::get_request() {
 
 void client::read_request(proxy_server &proxyServer) {
     if (socket.get_available_bytes() == 0) {
-        event.remove_flag(EPOLLIN);
         return;
     }
     time.reset();
@@ -174,6 +173,7 @@ void client::write_response(proxy_server &proxyServer) {
     write();
     if (get_buffer_size() == 0) {
         event.remove_flag(EPOLLOUT);
+        event.add_flag(EPOLLIN);
     }
 }
 

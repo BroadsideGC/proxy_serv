@@ -9,7 +9,7 @@
 #include "proxy_server.h"
 
 proxy_server::proxy_server(int port) : main_socket(::socket(AF_INET, SOCK_STREAM, 0)),
-                                       rslvr(sysconf(_SC_NPROCESSORS_ONLN)) {
+                                       rslvr(sysconf(_SC_NPROCESSORS_ONLN)*2) {
     std::cerr << "Proxy started at port: " << port << "\n";
     //std::cerr << epoll.get_fd() << '\n';
     int one = 1;
@@ -19,21 +19,22 @@ proxy_server::proxy_server(int port) : main_socket(::socket(AF_INET, SOCK_STREAM
     main_socket.get_fd().make_nonblocking();
     std::cerr << "Listening started\n";
     main_socket.set_flags(main_socket.get_flags() | EPOLLIN);
-    resolver_event = std::unique_ptr<io_event>(new io_event(epoll, rslvr.get_fd(), EPOLLIN,
-                                                [this](uint32_t events)mutable throw(std::runtime_error) {
-                                                    std::cerr << "Resolver handler\n";
-                                                    this->resolver_handler();
-                                                }));
     listen_event = std::unique_ptr<io_event>(new io_event(epoll, main_socket.get_fd(), EPOLLIN,
                                                           [this](uint32_t events)mutable throw(std::runtime_error) {
                                                               connect_client();
                                                           }));
     std::cerr << "Main listener added to epoll!\n";
+    resolver_event = std::unique_ptr<io_event>(new io_event(epoll, rslvr.get_fd(), EPOLLIN,
+                                                [this](uint32_t events)mutable throw(std::runtime_error) {
+                                                    std::cerr << "Resolver handler\n";
+                                                    this->resolver_handler();
+                                                }));
+    std::cerr<<"Resolver handler added to epoll\n";
 }
 
 proxy_server::~proxy_server() {
-    std::cerr << "Server stopped.\n";
     rslvr.stop();
+    std::cerr << "Server stopped.\n";
 }
 
 void proxy_server::run() {
