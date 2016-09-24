@@ -56,9 +56,9 @@ epoll_io &proxy_server::get_epoll() {
 }
 
 void proxy_server::resolver_handler() {
-    eventfd_t *tmp;
+    eventfd_t tmp;
 
-    if (eventfd_read(rslvr.get_fd().get_fd(), tmp) < 0) {
+    if (eventfd_read(rslvr.get_fd().get_fd(), &tmp) < 0) {
         perror("Reading from resolver failed");
     }
 
