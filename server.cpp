@@ -121,6 +121,10 @@ void server::disconnect(proxy_server &proxyServer) {
 
 void server::read_response(proxy_server &proxyServer) {
     std::cerr << "Read data from server, fd = " << get_fd().get_fd() << "\n";
+    if (socket.get_available_bytes()==0){
+        event.remove_flag(EPOLLIN);
+        return;
+    }
 
     time.reset();
 
