@@ -9,7 +9,7 @@
 #include "proxy_server.h"
 
 proxy_server::proxy_server(int port) : main_socket(::socket(AF_INET, SOCK_STREAM, 0)),
-                                       rslvr(/*sysconf(_SC_NPROCESSORS_ONLN)*/3) {
+                                       rslvr(sysconf(_SC_NPROCESSORS_ONLN)) {
     std::cerr << "Proxy started at port: " << port << "\n";
     //std::cerr << epoll.get_fd() << '\n';
     int one = 1;

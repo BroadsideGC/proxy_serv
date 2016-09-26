@@ -176,9 +176,7 @@ void client::write_response(proxy_server &proxyServer) {
     write();
     if (get_buffer_size() == 0) {
         event.remove_flag(EPOLLOUT);
-        if (request_server){
-            event.add_flag(EPOLLIN);
-        }
+        event.add_flag(EPOLLIN);
     }
 }
 
@@ -187,9 +185,7 @@ void client::disconnect(proxy_server &proxyServer) {
     std::cerr << "Disconnect client, fd = " << get_fd().get_fd() << "\n";
     if (has_server()) {
         //std::cerr<<"Disconnect server, and client fd = %d\n", get_server_fd().get_fd();
-        ///proxyServer.erase_server(get_server_fd().get_fd());
         request_server->unbind();
-        //request_server->disconnect();
         unbind();
     }
     proxyServer.erase_client(get_fd().get_fd());

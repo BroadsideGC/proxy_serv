@@ -117,11 +117,6 @@ void server::disconnect(proxy_server &proxyServer) {
         paired_client->unbind();
         //std::cerr<<"Test3\n";
     }
-   /* std::cerr<<"Test\n";
-    if (paired_client != nullptr){
-       
-    }
-    std::cerr<<"Test2\n";*/
 }
 
 void server::read_response(proxy_server &proxyServer) {
