@@ -121,6 +121,7 @@ http_request *client::get_request() {
 
 void client::read_request(proxy_server &proxyServer) {
     if (socket.get_available_bytes() == 0) {
+        event.remove_flag(EPOLLIN);
         return;
     }
     time.reset();
@@ -131,14 +132,18 @@ void client::read_request(proxy_server &proxyServer) {
     std::unique_ptr<http_request> cur_request(new http_request(get_buffer()));
 
     if (cur_request->get_stat() == http_request::BAD) {
-        buffer = http_protocol::BAD_REQUEST();
+        std::cerr<<"Bad request\n";
+        std::cerr<<"-----------------------------------------------------\n\n";
+        std::cerr<<buffer;
+        std::cerr<<"-----------------------------------------------------\n\n";
+       /* buffer = http_protocol::BAD_REQUEST();
         event.remove_flag(EPOLLIN);
-        event.add_flag(EPOLLOUT);
-        return;
+        event.add_flag(EPOLLOUT);*/
+        //return;
     }
 
     if (cur_request->is_ended()) {
-        std::cerr << "Request for host " << cur_request->get_host().c_str() << "\n";
+        std::cerr << "Request for host " << cur_request->get_host() << "\n";
 
         http_response *response = new http_response();
         set_response(response);
@@ -183,6 +188,7 @@ void client::write_response(proxy_server &proxyServer) {
 
 void client::disconnect(proxy_server &proxyServer) {
     std::cerr << "Disconnect client, fd = " << get_fd().get_fd() << "\n";
+    
     if (has_server()) {
         //std::cerr<<"Disconnect server, and client fd = %d\n", get_server_fd().get_fd();
         request_server->unbind();

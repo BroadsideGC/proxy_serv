@@ -57,7 +57,8 @@ void resolver::resolve() {
         hints.ai_family = AF_INET;
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_flags = AI_PASSIVE;
-
+        
+        std::cerr<<"Host:" <<request->get_host();
         auto err_no = getaddrinfo(request->get_host().c_str(), request->get_port().c_str(), &hints, &res);
 
         sockaddr host;

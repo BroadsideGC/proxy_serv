@@ -5,6 +5,7 @@
 #include <vector>
 #include <csignal>
 #include <iostream>
+#include <cassert>
 #include "linux_socket.h"
 
 
@@ -81,11 +82,11 @@ size_t linux_socket::write(std::string const &msg) {
 
 std::string linux_socket::read(size_t buffer_size) {
     std::vector<char> buffer(buffer_size);
-
-    if ((recv(get_fd().get_fd(), buffer.data(), buffer_size, 0)) == -1) {
+    int recieved = (recv(get_fd().get_fd(), buffer.data(), buffer_size, 0));
+    if (recieved == -1) {
         throw_server_error("Error while reading!");
     }
-
+    assert(recieved == buffer_size);
     return std::string(buffer.begin(), buffer.end());
 }
 

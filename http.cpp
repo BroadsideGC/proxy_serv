@@ -2,6 +2,7 @@
 
 #include "http.hpp"
 #include "server_utils.h"
+#include <string>
 #include <algorithm>
 
 // http_protocol
@@ -12,6 +13,9 @@ http_protocol::http_protocol(std::string content) : state(EMPTY) {
 }
 
 void http_protocol::set_header(std::string key, std::string val) {
+    std::cerr<<"Key: "<<key<<"\n";
+    std::transform(key.begin(),key.end(),key.begin(),::tolower);
+     std::cerr<<"Key: "<<key<<"\n";
     headers[key] = val;
 }
 
@@ -26,7 +30,9 @@ void http_protocol::parse_data() {
         auto first_space = std::find_if(data.begin(), data.end(), [](char a) { return a == ' '; });
         auto second_space = std::find_if(first_space + 1, data.end(), [](char a) { return a == ' '; });
         start_line_end = std::find_if(second_space + 1, data.end(), [](char a) { return a == '\r'; });
-        
+        std::cerr<<"First space "<<(first_space == data.end())<<'\n';
+        std::cerr<<"Second space "<<(second_space == data.end())<<'\n';
+        std::cerr<<"Start line end "<<(start_line_end == data.end())<<"\n";
         if (first_space == data.end() || second_space == data.end() || start_line_end == data.end()) {
             state = BAD;
         } else {
@@ -49,6 +55,7 @@ void http_protocol::parse_data() {
 
 void http_protocol::parse_headers(std::string text_headers) {
     if (text_headers == "") {
+        std::cerr<<"No headers\n";
         state = BAD;
     } else {
         auto headers_end = text_headers.begin();
@@ -58,7 +65,9 @@ void http_protocol::parse_headers(std::string text_headers) {
             auto shift=1;
             while (*(space+shift) == ' ')shift++;
             auto crlf = std::find_if(space + shift, text_headers.end(), [](char a) { return a == '\r'; });
-            headers.insert({{headers_end, space}, {space + shift, crlf}});
+            std::string cur_header = {headers_end, space};
+            std::transform(cur_header.begin(),cur_header.end(),cur_header.begin(),::tolower);
+            headers.insert({cur_header, {space + shift, crlf}});
             headers_end = crlf + 2;
         };
         state = HEADERS;
@@ -66,19 +75,21 @@ void http_protocol::parse_headers(std::string text_headers) {
 }
 
 void http_protocol::check_body() {
-    if (get_header("Content-Length") != "") {
-        if (get_body().size() == static_cast<size_t>(std::stoi(get_header("Content-Length")))) {
+    if (get_header("content-length") != "") {
+        std::cerr<<"TYU\n";
+        if (get_body().size() == static_cast<size_t>(std::stoi(get_header("content-length")))) {
             state = FULL;
         } else {
             state = PARTIAL;
         }
-    } else if (get_header("Transfer-Encoding") == "chunked") {
+    } else if (get_header("transfer-encoding") == "chunked") {
         if (get_body().size() >= 5 && get_body().substr(get_body().size() - 5) == "0\r\n\r\n") {
             state = FULL;
         } else {
             state = PARTIAL;
         }
     } else {
+        std::cerr<<"There "<<(get_body().size()==0)<<"\n";
         state = get_body().size() == 0 ? FULL : BAD;
     }
 }
@@ -94,7 +105,8 @@ std::string http_protocol::get_data() {
 std::string http_protocol::get_headers() {
     std::string headers_text = "";
     for (auto header : headers) {
-        headers_text += header.first + ": " + header.second + "\r\n";
+        
+        headers_text +=header.first + ": " + header.second + "\r\n";
     }
     
     return headers_text;
@@ -124,7 +136,7 @@ void http_request::parse_start_line(std::string start_line) {
     URI = {first_space + 1, second_space};
     protocol = {second_space + 1, crlf};
     
-    bool is_valid_method = method == "GET" || method == "POST";
+    bool is_valid_method = method == "GET" || method == "POST" || method == "CONNECT";
     bool is_valid_URI = URI != "";
     bool is_valid_protocol = protocol == "HTTP/1.0" || protocol == "HTTP/1.1";
     
@@ -156,10 +168,10 @@ std::string http_request::get_port() {
 
 std::string http_request::get_host() {
     if (host == "") {
-        if (get_header("Host") == "" && get_header("host") == "") {
+        if (get_header("host") == "") {
             host = port = "";
         } else {
-            host = get_header("Host") == "" ? get_header("host") : get_header("Host");
+            host = get_header("host");
             
             // "hostname.com:80" -> "hostname.com"
             port = (host.find(":") == std::string::npos) ? "80" : host.substr(host.find(":") + 1);
@@ -183,11 +195,11 @@ void http_request::set_resolved_host(sockaddr rh) {
 }
 
 bool http_request::is_validating() {
-    return get_header("If-Match") != ""
-            || get_header("If-Modified-Since") != ""
-            || get_header("If-None-Match") != ""
-            || get_header("If-Range") != ""
-            || get_header("If-Unmodified-Since") != "";
+    return get_header("if-match") != ""
+            || get_header("if-modified-since") != ""
+            || get_header("if-none-match") != ""
+            || get_header("if-range") != ""
+            || get_header("if-unmodified-since") != "";
 }
 
 // http_response
@@ -207,6 +219,8 @@ void http_response::parse_start_line(std::string start_line) {
     
     protocol = {start_line.begin(), first_space};
     status = {first_space + 1, second_space};
+
+    std::cerr<<status<<" "<<protocol<<"\n";
     
     bool is_valid_status = status >= "100" && status <= "999";
     bool is_valid_protocol = protocol == "HTTP/1.0" || protocol == "HTTP/1.1";
@@ -215,7 +229,7 @@ void http_response::parse_start_line(std::string start_line) {
 }
 
 bool http_response::check_cache_control() {
-    auto hdr = get_header("Cache-Control");
+    auto hdr = get_header("cache-control");
     if (hdr == "") {
         return true;
     }

@@ -73,6 +73,7 @@ private:
     std::string buffer, host;
     timer<server> time;
     linux_socket socket;
+    std::string request;
     io_event event;
     client *paired_client;
 

@@ -130,9 +130,16 @@ void server::read_response(proxy_server &proxyServer) {
 
     cur_response->append(data);
 
-    //std::cerr << "State: " << cur_response->get_stat() << "\n";
+    std::cerr << "State: " << cur_response->get_stat() << "\n";
+
+    http_response chr("HTTP/1.1 200\r\nConnection: keep-alive\r\ntransfer-encoding: chunked\r\nServer: nginx\r\nDate: Mon, 26 Sep 2016 13:25:59 GMT\r\nExpires: Mon, 26 Sep 2016 13:25:58 GMT\r\nContent-Type: text/javascript\r\nCache-Control: no-cache\r\n\r\n1dc\r\n\nBootstrapper._serverTime = '2016-09-26 13:25:59'; Bootstrapper._clientIP = '188.162.64.9'; var psj0 = 'http://nexus.ensighten.com/dell/prod/code/205be862ca40a311741b62155470cf0f.js?conditionId0=304500';Bootstrapper.insertScript(psj0);var psj1 = 'http://nexus.ensighten.com/dell/prod/code/0644059d312d2cc18727b03de9d3380d.js?conditionId0=421951';Bootstrapper.loadScriptCallback(psj1, Bootstrapper.callOnPageSpecificCompletion);Bootstrapper.setPageSpecificDataDefinitionIds([])\r\n");
+    std::cerr<<"Test"<<chr.get_stat();
 
     if (cur_response->get_stat() == http_response::BAD) {
+        std::cerr<<"Bad response\n";
+        std::cerr<<"Response--------------------------------------------\n\n";
+        std::cerr<<cur_response->get_data();
+        std::cerr<<"----------------------------------------------------\n\n";
         buffer = http_protocol::BAD_REQUEST();
         push_to_client();
         paired_client->event.add_flag(EPOLLOUT);
@@ -146,9 +153,14 @@ void server::read_response(proxy_server &proxyServer) {
     if (cur_response->is_ended()) {
         std::string cache_key = paired_client->get_request()->get_host() + paired_client->get_request()->get_relative_URI();
         // check cache hit
-        //std::cerr<<cur_response->get_status()<<'\n';
+        std::cerr<<cur_response->get_status()<<'\n';
+        if (cur_response->get_status() == "400"){
+            std::cerr<<"Request--------------------------------------------\n\n";
+            std::cerr<<request<<"\n\n";
+            std::cerr<<"---------------------------------------------------\n\n";
+        }
         if (cur_response->get_status() == "304" && proxyServer.get_cache().contains(cache_key)) {
-            std::cerr << "Cache hit for URI " << cache_key.c_str() << "\n";
+            std::cerr << "Cache hit for URI " << cache_key << "\n";
 
             http_response cached_response = proxyServer.get_cache().get(cache_key);
             get_buffer() = cached_response.get_data();
@@ -177,12 +189,12 @@ void server::write_request(proxy_server &proxyServer) {
         disconnect(proxyServer);
         return;
     }
-
+    request = buffer;
     write();
     if (get_buffer_size() == 0) {
         event.add_flag(EPOLLIN);
         event.remove_flag(EPOLLOUT);
-        paired_client->event.add_flag(EPOLLOUT);
+        //paired_client->event.add_flag(EPOLLOUT);
     }
 }
 
