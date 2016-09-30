@@ -30,9 +30,6 @@ void http_protocol::parse_data() {
         auto first_space = std::find_if(data.begin(), data.end(), [](char a) { return a == ' '; });
         auto second_space = std::find_if(first_space + 1, data.end(), [](char a) { return a == ' '; });
         start_line_end = std::find_if(second_space + 1, data.end(), [](char a) { return a == '\r'; });
-        std::cerr<<"First space "<<(first_space == data.end())<<'\n';
-        std::cerr<<"Second space "<<(second_space == data.end())<<'\n';
-        std::cerr<<"Start line end "<<(start_line_end == data.end())<<"\n";
         if (first_space == data.end() || second_space == data.end() || start_line_end == data.end()) {
             state = BAD;
         } else {
@@ -76,7 +73,6 @@ void http_protocol::parse_headers(std::string text_headers) {
 
 void http_protocol::check_body() {
     if (get_header("content-length") != "") {
-        std::cerr<<"TYU\n";
         if (get_body().size() == static_cast<size_t>(std::stoi(get_header("content-length")))) {
             state = FULL;
         } else {
@@ -89,7 +85,6 @@ void http_protocol::check_body() {
             state = PARTIAL;
         }
     } else {
-        std::cerr<<"There "<<(get_body().size()==0)<<"\n";
         state = get_body().size() == 0 ? FULL : BAD;
     }
 }
@@ -219,8 +214,6 @@ void http_response::parse_start_line(std::string start_line) {
     
     protocol = {start_line.begin(), first_space};
     status = {first_space + 1, second_space};
-
-    std::cerr<<status<<" "<<protocol<<"\n";
     
     bool is_valid_status = status >= "100" && status <= "999";
     bool is_valid_protocol = protocol == "HTTP/1.0" || protocol == "HTTP/1.1";

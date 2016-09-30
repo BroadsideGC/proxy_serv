@@ -136,10 +136,10 @@ void client::read_request(proxy_server &proxyServer) {
         std::cerr<<"-----------------------------------------------------\n\n";
         std::cerr<<buffer;
         std::cerr<<"-----------------------------------------------------\n\n";
-       /* buffer = http_protocol::BAD_REQUEST();
+        buffer = http_protocol::BAD_REQUEST();
         event.remove_flag(EPOLLIN);
-        event.add_flag(EPOLLOUT);*/
-        //return;
+        event.add_flag(EPOLLOUT);
+        return;
     }
 
     if (cur_request->is_ended()) {

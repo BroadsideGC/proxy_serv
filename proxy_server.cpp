@@ -57,11 +57,12 @@ epoll_io &proxy_server::get_epoll() {
 
 void proxy_server::resolver_handler() {
     eventfd_t tmp;
-
+    std::mutex lk;
+    // std::unique_lock<std::mutex> lock{lk};
     if (eventfd_read(rslvr.get_fd().get_fd(), &tmp) < 0) {
         perror("Reading from resolver failed");
     }
-
+    //lock.unlock();
     std::unique_ptr<http_request> cur_request = rslvr.get_task();
     std::cerr << "Resolver callback called for host " << cur_request->get_host().c_str() << "\n";
 
