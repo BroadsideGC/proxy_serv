@@ -28,7 +28,7 @@ client::client(int fd, proxy_server &proxyServer) : socket(fd), request_server(n
 };
 
 client::~client() {
- std::cerr<<"Client destroyed" <<get_fd().get_fd()<<"\n";
+    //std::cerr << "Client destroyed" << get_fd().get_fd() << "\n";
 }
 
 file_descriptor &client::get_fd() {
@@ -86,10 +86,10 @@ void client::bind(server &new_server) {
 }
 
 void client::unbind() {
-    if (request_server!=nullptr){
+    if (request_server != nullptr) {
         request_server.reset(nullptr);
     }
-    std::cerr<<"Reset "<<socket.get_fd().get_fd()<<"\n";
+    //std::cerr << "Reset " << socket.get_fd().get_fd() << "\n";
 }
 
 void client::flush_client_buffer() {
@@ -132,10 +132,10 @@ void client::read_request(proxy_server &proxyServer) {
     std::unique_ptr<http_request> cur_request(new http_request(get_buffer()));
 
     if (cur_request->get_stat() == http_request::BAD) {
-        std::cerr<<"Bad request\n";
-        std::cerr<<"-----------------------------------------------------\n\n";
-        std::cerr<<buffer;
-        std::cerr<<"-----------------------------------------------------\n\n";
+        std::cerr << "Bad request\n";
+        std::cerr << "-----------------------------------------------------\n\n";
+        std::cerr << buffer;
+        std::cerr << "-----------------------------------------------------\n\n";
         buffer = http_protocol::BAD_REQUEST();
         event.remove_flag(EPOLLIN);
         event.add_flag(EPOLLOUT);
@@ -176,7 +176,7 @@ void client::read_request(proxy_server &proxyServer) {
 }
 
 void client::write_response(proxy_server &proxyServer) {
-    std::cerr << "Writing data to client, fd = " << get_fd().get_fd() << "\n";
+    //std::cerr << "Writing data to client, fd = " << get_fd().get_fd() << "\n";
     time.reset();
     write();
     if (get_buffer_size() == 0) {
@@ -187,8 +187,8 @@ void client::write_response(proxy_server &proxyServer) {
 
 
 void client::disconnect(proxy_server &proxyServer) {
-    std::cerr << "Disconnect client, fd = " << get_fd().get_fd() << "\n";
-    
+    //std::cerr << "Disconnect client, fd = " << get_fd().get_fd() << "\n";
+
     if (has_server()) {
         //std::cerr<<"Disconnect server, and client fd = %d\n", get_server_fd().get_fd();
         request_server->unbind();

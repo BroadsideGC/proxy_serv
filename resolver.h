@@ -10,9 +10,7 @@
 #include <condition_variable>
 #include <thread>
 #include <queue>
-#include "sys/eventfd.h"
 #include "http.hpp"
-#include "lru_cache.h"
 #include "file_descriptor.h"
 
 class resolver {
@@ -27,6 +25,8 @@ public:
     void add_task(std::unique_ptr<http_request>);
     std::unique_ptr<http_request> get_task();
 
+
+    void set_fd(file_descriptor fd);
     file_descriptor& get_fd();
 private:
     bool working = false;

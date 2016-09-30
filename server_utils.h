@@ -16,7 +16,7 @@
 #include <stdlib.h>
 
 
-inline void throw_server_error(std::string msg){
+inline void throw_server_error(std::string msg) {
     throw std::runtime_error(msg);
 }
 

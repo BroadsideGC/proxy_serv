@@ -105,15 +105,15 @@ void server::push_to_client() {
 
 
 server::~server() {
-    std::cerr<<"Destroing server\n";
-     //proxyServer.erase_server( get_fd().get_fd());
+    //std::cerr << "Destroing server\n";
+    //proxyServer.erase_server( get_fd().get_fd());
 }
 
 void server::disconnect(proxy_server &proxyServer) {
-    std::cerr << "Disconnect server " << get_fd().get_fd()<<get_host() << "\n";
+    //std::cerr << "Disconnect server " << get_fd().get_fd() << get_host() << "\n";
     int sfd = get_fd().get_fd();
-     proxyServer.erase_server(sfd);
-    if (paired_client->request_server.get() == this){
+    proxyServer.erase_server(sfd);
+    if (paired_client->request_server.get() == this) {
         paired_client->unbind();
         //std::cerr<<"Test3\n";
     }
@@ -121,7 +121,7 @@ void server::disconnect(proxy_server &proxyServer) {
 
 void server::read_response(proxy_server &proxyServer) {
     std::cerr << "Read data from server, fd = " << get_fd().get_fd() << "\n";
-    if (socket.get_available_bytes()==0){
+    if (socket.get_available_bytes() == 0) {
         event.remove_flag(EPOLLIN);
         return;
     }
@@ -136,13 +136,13 @@ void server::read_response(proxy_server &proxyServer) {
 
     //std::cerr << "State: " << cur_response->get_stat() << "\n";
 
-    
+
 
     if (cur_response->get_stat() == http_response::BAD) {
-        std::cerr<<"Bad response\n";
-        std::cerr<<"Response--------------------------------------------\n\n";
-        std::cerr<<cur_response->get_data();
-        std::cerr<<"----------------------------------------------------\n\n";
+        std::cerr << "Bad response\n";
+        std::cerr << "Response--------------------------------------------\n\n";
+        std::cerr << cur_response->get_data();
+        std::cerr << "----------------------------------------------------\n\n";
         buffer = http_protocol::BAD_REQUEST();
         push_to_client();
         paired_client->event.add_flag(EPOLLOUT);
@@ -156,11 +156,11 @@ void server::read_response(proxy_server &proxyServer) {
     if (cur_response->is_ended()) {
         std::string cache_key = paired_client->get_request()->get_host() + paired_client->get_request()->get_relative_URI();
         // check cache hit
-        std::cerr<<cur_response->get_status()<<'\n';
-        if (cur_response->get_status() == "400"){
-            std::cerr<<"Request--------------------------------------------\n\n";
-            std::cerr<<request<<"\n\n";
-            std::cerr<<"---------------------------------------------------\n\n";
+        std::cerr << cur_response->get_status() << '\n';
+        if (cur_response->get_status() == "400") {
+            std::cerr << "Request--------------------------------------------\n\n";
+            std::cerr << request << "\n\n";
+            std::cerr << "---------------------------------------------------\n\n";
         }
         if (cur_response->get_status() == "304" && proxyServer.get_cache().contains(cache_key)) {
             std::cerr << "Cache hit for URI " << cache_key << "\n";

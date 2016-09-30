@@ -12,9 +12,9 @@ io_event::io_event(epoll_io &service, file_descriptor &fd, uint32_t flags, std::
 }
 
 io_event::~io_event() {
-   // std::cerr<<"Removing from epoll "<<fd.get_fd()<<"\n";
+    std::cerr<<"Removing from epoll "<<fd.get_fd()<<"\n";
     service.remove(fd, *this, 0);
-   // std::cerr<<"Event deleted\n";
+    // std::cerr<<"Event deleted\n";
 }
 
 

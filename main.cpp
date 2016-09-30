@@ -6,10 +6,9 @@
 using namespace std;
 
 
-
 int main() {
-   // freopen("debug.txt", "w", stderr);
-   proxy_server server(8080);
+    // freopen("debug.txt", "w", stderr);
+    proxy_server server(8080);
     server.run();
     return 0;
 

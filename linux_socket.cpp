@@ -19,8 +19,6 @@ linux_socket::linux_socket(int fd) : fd(fd) {
 }
 
 
-
-
 void linux_socket::bind(sa_family_t sa_family, uint16_t port, in_addr_t s_addr) {
     struct sockaddr_in hints;
 

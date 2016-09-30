@@ -21,8 +21,11 @@ class proxy_server;
 
 class client {
     friend class proxy_server;
+
     friend class server;
+
     friend class timer<client>;
+
 public:
     client(const client &) = delete;
 
@@ -32,9 +35,9 @@ public:
 
     ~client();
 
-    file_descriptor& get_fd();
+    file_descriptor &get_fd();
 
-    file_descriptor& get_server_fd();
+    file_descriptor &get_server_fd();
 
     bool has_server();
 
@@ -59,16 +62,19 @@ public:
 
     void set_response(http_response *new_response);
 
-    http_response * get_response();
+    http_response *get_response();
 
     void set_request(http_request *new_request);
 
-    http_request * get_request();
+    http_request *get_request();
 
 private:
     void read_request(proxy_server &proxyServer);
+
     void write_response(proxy_server &);
+
     void disconnect(proxy_server &proxyServer);
+
     std::string buffer;
     linux_socket socket;
     io_event event;

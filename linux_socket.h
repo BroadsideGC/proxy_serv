@@ -20,8 +20,9 @@ public:
     linux_socket(int fd);
 
 
-    linux_socket(linux_socket&&) = default;
-    linux_socket& operator=(linux_socket&&) = default;
+    linux_socket(linux_socket &&) = default;
+
+    linux_socket &operator=(linux_socket &&) = default;
 
     void bind(sa_family_t sa_family, uint16_t port, in_addr_t s_addr);
 

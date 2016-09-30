@@ -14,6 +14,8 @@
 #include "client.h"
 #include "resolver.h"
 #include "arpa/inet.h"
+#include "lru_cache.h"
+
 class client;
 class server;
 class proxy_server {
@@ -40,11 +42,13 @@ private:
     void resolver_handler();
 
     epoll_io epoll;
+    bool working;
     linux_socket main_socket;
     std::map<uintptr_t, std::unique_ptr<client> > clients;
     std::map<uintptr_t, server* > servers;
     lru_cache<std::string, http_response> cache;
-    resolver rslvr;
+    file_descriptor pipe_fd;
+    class resolver rslvr;
     std::unique_ptr<io_event> listen_event;
     std::unique_ptr<io_event> resolver_event;
 };

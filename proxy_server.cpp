@@ -10,7 +10,7 @@
 
 proxy_server::proxy_server(int port) : main_socket(::socket(AF_INET, SOCK_STREAM, 0)),
                                        rslvr(sysconf(_SC_NPROCESSORS_ONLN)) {
-    std::cerr << "Proxy started at port: " << port << "\n";
+    std::cerr<<"Proxy started at port: "<<port<<"\n";
     //std::cerr << epoll.get_fd() << '\n';
     int one = 1;
     setsockopt(main_socket.get_fd().get_fd(), SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int));
@@ -19,22 +19,30 @@ proxy_server::proxy_server(int port) : main_socket(::socket(AF_INET, SOCK_STREAM
     main_socket.get_fd().make_nonblocking();
     std::cerr << "Listening started\n";
     main_socket.set_flags(main_socket.get_flags() | EPOLLIN);
-    listen_event = std::unique_ptr<io_event>(new io_event(epoll, main_socket.get_fd(), EPOLLIN,
-                                                          [this](uint32_t events){
-                                                              connect_client();
-                                                          }));
-    std::cerr << "Main listener added to epoll!\n";
-    resolver_event = std::unique_ptr<io_event>(new io_event(epoll, rslvr.get_fd(), EPOLLIN,
-                                                [this](uint32_t events) {
+    int fd[2];
+    pipe(fd);
+    pipe_fd = file_descriptor(fd[0]);
+    file_descriptor resolver_fd(fd[1]);
+
+    pipe_fd.make_nonblocking();
+    resolver_fd.make_nonblocking();
+    rslvr.set_fd(std::move(resolver_fd));
+    // std::cerr << "Resolver fds: " << rslvr.get_fd().get_fd() << " " << pipe_fd.get_fd() << "\n";
+    resolver_event = std::unique_ptr<io_event>(new io_event(epoll, pipe_fd, EPOLLIN,
+                                                [this](uint32_t events)mutable throw(std::runtime_error) {
                                                     std::cerr << "Resolver handler\n";
                                                     this->resolver_handler();
                                                 }));
-    std::cerr<<"Resolver handler added to epoll\n";
+    listen_event = std::unique_ptr<io_event>(new io_event(epoll, main_socket.get_fd(), EPOLLIN,
+                                                          [this](uint32_t events)mutable throw(std::runtime_error) {
+                                                              connect_client();
+                                                          }));
+    std::cerr << "Main listener added to epoll!\n";
 }
 
 proxy_server::~proxy_server() {
-    rslvr.stop();
     std::cerr << "Server stopped.\n";
+    rslvr.stop();
 }
 
 void proxy_server::run() {
@@ -45,7 +53,7 @@ void proxy_server::run() {
 
 void proxy_server::connect_client() {
     auto client_fd = this->main_socket.accept();
-    std::cerr << "Client socket assigned to: " << client_fd << "\n";
+    std::cerr << "Client socket assigned to: "<<client_fd<<"\n";
     clients[client_fd] = std::unique_ptr<client>(new client(client_fd, *this));
     std::cerr << clients.size() << " clients now\n";
 }
@@ -56,19 +64,19 @@ epoll_io &proxy_server::get_epoll() {
 }
 
 void proxy_server::resolver_handler() {
-    eventfd_t tmp;
-    std::mutex lk;
-    // std::unique_lock<std::mutex> lock{lk};
-    if (eventfd_read(rslvr.get_fd().get_fd(), &tmp) < 0) {
+    char tmp;
+    if (read(pipe_fd.get_fd(), &tmp, sizeof(tmp)) == -1) {
         perror("Reading from resolver failed");
     }
-    //lock.unlock();
-    std::unique_ptr<http_request> cur_request = rslvr.get_task();
-    std::cerr << "Resolver callback called for host " << cur_request->get_host().c_str() << "\n";
 
+    std::unique_ptr<http_request> cur_request = rslvr.get_task();
+    std::cerr << "Resolver callback called for host "<<cur_request->get_host()<<"\n";
+
+    std::cerr<<"Finding client "<<cur_request->get_client_fd()<<"\n";
     client *cur_client = clients[cur_request->get_client_fd()].get();
 
     if (cur_client == nullptr) {
+        //throw_server_error("No client");
         return;
     }
 
@@ -86,7 +94,7 @@ void proxy_server::resolver_handler() {
     srvr->set_host(cur_request->get_host());
     cur_client->bind(*srvr);
     //std::cerr << "Server with fd = %d binded to client with fd = %d\n", srvr->get_fd().get_fd(),
-    //  cur_client->get_fd().get_fd());
+          //  cur_client->get_fd().get_fd());
     srvr->add_flag(EPOLLOUT);
     servers[srvr->get_fd().get_fd()] = srvr;
     std::cerr << servers.size() << " servers now\n";

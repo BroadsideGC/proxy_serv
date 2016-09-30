@@ -27,7 +27,7 @@ void epoll_io::run() {
     epoll_event events[MAX_EPOLL_EVENTS_COUNT];
     std::cerr << "Еполл крутится, клиенты мутятся\n";
     while (working) {
-        //printf("Щя послушаем\n");
+        std::cerr<<"Щя послушаем\n";
         auto events_count = epoll_wait(epoll_fd, events, MAX_EPOLL_EVENTS_COUNT, DEFAULT_EPOLL_TIMEOUT);
         if (events_count < 0) {
             if (errno != EINTR) {
@@ -35,7 +35,10 @@ void epoll_io::run() {
             } else {
                 break;
             }
+        }else {
+            std::cerr<<"Found "<<events_count<<" events\n";
         }
+
         for (auto i = 0; i < events_count; i++) {
             auto &ev = events[i];
             io_event *x = (io_event *) (ev.data.ptr);

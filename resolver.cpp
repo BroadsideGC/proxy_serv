@@ -7,7 +7,6 @@
 
 resolver::resolver(size_t thread_count) {
     working = true;
-    fd = eventfd(0, EFD_SEMAPHORE);
     try {
         for (auto i = 0; i < thread_count; i++) {
             threads.push_back(std::thread([this]() {
@@ -57,9 +56,8 @@ void resolver::resolve() {
         hints.ai_family = AF_INET;
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_flags = AI_PASSIVE;
-        
-        std::cerr<<"Host:" <<request->get_host();
-        auto err_no = getaddrinfo(request->get_host().c_str(), request->get_port().c_str(), &hints, &res);
+
+        int err_no = getaddrinfo(request->get_host().c_str(), request->get_port().c_str(), &hints, &res);
 
         sockaddr host;
 
@@ -86,7 +84,9 @@ void resolver::resolve() {
 
 void resolver::send() {
     std::unique_lock<std::mutex> lock{lk};
-    if (eventfd_write(fd.get_fd(), 1) == -1) {
+    char tmp = 'a';
+    ssize_t cnt = write(fd.get_fd(),&tmp, sizeof(tmp));
+    if (cnt == -1) {
         lock.unlock();
         perror("Resolver: error while sending message to proxy server");
     }
@@ -108,17 +108,22 @@ void resolver::add_task(std::unique_ptr<http_request> request) {
     if (!working) {
         throw_server_error("Resolver doesn't running!");
     }
+    std::unique_lock<std::mutex> lock{lk};
     tasks.push(std::move(request));
     condition.notify_one();
 }
 
 std::unique_ptr<http_request> resolver::get_task() {
+    std::unique_lock<std::mutex> lock{lk};
     auto request = std::move(resolved.front());
     resolved.pop();
     return request;
 }
 
+void resolver::set_fd(file_descriptor given_fd) {
+    fd = std::move(given_fd);
+}
+
 file_descriptor &resolver::get_fd() {
     return fd;
 }
-

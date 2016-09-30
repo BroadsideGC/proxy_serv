@@ -15,7 +15,7 @@
 #include "server.h"
 #include "proxy_server.h"
 
-#define TIMEOUT 180
+const int TIMEOUT = 180;
 
 class proxy_server;
 
@@ -30,7 +30,7 @@ public:
     timer(epoll_io &epp, type_t &side, proxy_server &proxyServer) : side(side), fd(timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC)), event(epp, fd, EPOLLIN, [this, &side, &proxyServer](uint32_t) {
         std::cerr << "Timer Timeout\n";
         char buf[8];
-        if (read(fd.get_fd(), buf, 8)==-1){
+        if (read(fd.get_fd(), buf, 8) == -1) {
             perror("Error in timer");
         }
         side.disconnect(proxyServer);

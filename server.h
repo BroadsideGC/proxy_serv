@@ -22,8 +22,6 @@ class proxy_server;
 class server {
     friend class proxy_server;
 
-   // friend class client;
-
     friend class timer<server>;
 
 public:

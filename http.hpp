@@ -43,7 +43,7 @@ public:
 
     std::string get_data();
 
-    state_t get_stat(){
+    state_t get_stat() {
         return state;
     }
 

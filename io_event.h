@@ -22,7 +22,7 @@ public:
 
     ~io_event();
 
-    file_descriptor& get_fd(){
+    file_descriptor &get_fd() {
         return fd;
     }
 
