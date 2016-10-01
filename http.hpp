@@ -35,6 +35,22 @@ public:
         return request;
     }
 
+    static std::string BAD_GETAWAY() {
+        std::string request = std::string("HTTP/1.1 502 Bad Getaway\r\n");
+        request.append("Server: lol\r\n");
+        request.append("Content-Type: text/html; charset=utf-8\r\n");
+        request.append("Content-Length: 163\r\n");
+        request.append("Connection: close\r\n\r\n");
+        request.append("<html>\r\n");
+        request.append("<head><title>502 Bad Getaway</title></head>\r\n");
+        request.append("<body bgcolor=\"white\">\r\n");
+        request.append("<center><h1>502 Bad Getaway</h1></center>\r\n");
+        request.append("<hr><center>proxy</center>\r\n");
+        request.append("</body>\r\n");
+        request.append("</html>");
+
+        return request;
+    }
     http_protocol();
 
     http_protocol(std::string);
@@ -77,6 +93,8 @@ protected:
     std::string get_body();
 
     state_t state;
+
+    bool incorrect = 0;
 
     size_t body_begin_pos;
     std::unordered_map<std::string, std::string> headers;
