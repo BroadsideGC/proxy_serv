@@ -55,7 +55,10 @@ public:
 
     bool is_ended();
 
-    std::string protocol, data;
+    std::string get(){
+        return data;
+    }
+
 protected:
     void parse_data();
 
@@ -66,6 +69,8 @@ protected:
     void check_body();
 
     virtual std::string get_start_line() = 0;
+
+    std::string protocol, data;
 
     std::string get_headers();
 

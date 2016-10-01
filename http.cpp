@@ -48,6 +48,9 @@ void http_protocol::parse_data() {
         body_begin_pos = _body_begin_pos + 4;
         check_body();
     }
+    if (state == BAD) {
+        body_begin_pos = data.size() - 1;
+    }
 }
 
 void http_protocol::parse_headers(std::string text_headers) {
@@ -94,6 +97,7 @@ bool http_protocol::is_ended() {
 }
 
 std::string http_protocol::get_data() {
+    //std::string ret="";
     return get_start_line() + "\r\n" + get_headers() + "\r\n" + get_body();
 }
 
@@ -211,10 +215,9 @@ std::string http_response::get_start_line() {
 void http_response::parse_start_line(std::string start_line) {
     auto first_space = std::find_if(start_line.begin(), start_line.end(), [](char a) { return a == ' '; });
     auto second_space = std::find_if(first_space + 1, start_line.end(), [](char a) { return a == ' '; });
-
     protocol = {start_line.begin(), first_space};
     status = {first_space + 1, second_space};
-
+    //std::cout<<status << " " << protocol <<"\n";
     bool is_valid_status = status >= "100" && status <= "999";
     bool is_valid_protocol = protocol == "HTTP/1.0" || protocol == "HTTP/1.1";
 

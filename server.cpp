@@ -137,9 +137,8 @@ void server::read_response(proxy_server &proxyServer) {
     //std::cerr << "State: " << cur_response->get_stat() << "\n";
 
 
-
     if (cur_response->get_stat() == http_response::BAD) {
-        std::cerr << "Bad response\n";
+        std::cerr << "Bad response " << get_host()<<"\n";
         std::cerr << "Response--------------------------------------------\n\n";
         std::cerr << cur_response->get_data();
         std::cerr << "----------------------------------------------------\n\n";
